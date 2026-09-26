@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { Bamboo, InkBlot, InkMountains, ProcessIcon, Seal } from '../components/Ink'
 import AdVideos from '../components/AdVideos'
+import MediaVideos from '../components/MediaVideos'
 import RecentReviews from '../components/RecentReviews'
 import { useProducts } from '../lib/useProducts'
 import { won } from '../lib/format'
@@ -80,6 +81,8 @@ export default function Home() {
       </section>
 
       <AdVideos />
+
+      <MediaVideos />
 
       <RecentReviews />
 
