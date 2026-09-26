@@ -86,7 +86,7 @@ export default function Home() {
       <section className="container section showcase">
         <div className="showcase-media">
           <InkBlot className="showcase-blot" />
-          <img src="/images/product-set.jpg" alt="천왕봉 죽염 유리병과 선물 상자" loading="lazy" />
+          <img src="/images/showcase-giftset.jpg" alt="천왕봉 9회 죽염 선물세트 (분말·고체 250g, 30g)" loading="lazy" width="1400" height="933" />
         </div>
         <div className="showcase-text">
           <p className="vertical showcase-vertical">천왕봉 죽염</p>

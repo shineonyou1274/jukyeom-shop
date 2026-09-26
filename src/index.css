@@ -148,7 +148,7 @@ code { background: var(--paper-2); padding: 1px 6px; border-radius: 4px; }
 /* 제품 소개 */
 .showcase { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
 .showcase-media { position: relative; }
-.showcase-media img { position: relative; width: 100%; max-width: 480px; margin: 0 auto; border-radius: var(--radius); box-shadow: 0 20px 40px rgba(40, 30, 10, .12); }
+.showcase-media img { position: relative; width: 100%; max-width: 620px; height: auto; margin: 0 auto; border-radius: var(--radius); box-shadow: 0 20px 40px rgba(40, 30, 10, .12); }
 .showcase-blot { position: absolute; width: 90%; left: -10%; top: -12%; opacity: .45; }
 .showcase-text { display: flex; gap: 24px; align-items: flex-start; position: relative; }
 .showcase-vertical { font-size: 1.6rem; font-weight: 700; letter-spacing: .25em; }
