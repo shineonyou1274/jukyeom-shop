@@ -25,4 +25,4 @@ export const BANK = {
 }
 
 export const SHIPPING_FEE = 4000       // 기본 택배비 (도서·산간은 추가 요금 별도 안내)
-export const FREE_SHIPPING_THRESHOLD = 30000
+export const FREE_SHIPPING_THRESHOLD = 50000
