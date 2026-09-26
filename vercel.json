@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/:path((?!api/).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "jukyeom-shop-eta.vercel.app"
+        }
+      ],
+      "destination": "https://www.xn--9n3bs7nuhy7gm6f.kr/:path",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
