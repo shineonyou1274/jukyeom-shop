@@ -84,5 +84,8 @@ export default postHandler(async (req, body) => {
     throw itemsErr
   }
 
+  // 결제창을 닫아 버려진 주문서(결제 대기)는 하루가 지나면 정리한다
+  await db.from('orders').delete().eq('status', 'pending').lt('created_at', new Date(Date.now() - 86400000).toISOString())
+
   return { orderNo: order.order_no, orderName, amount: totalAmount }
 })
