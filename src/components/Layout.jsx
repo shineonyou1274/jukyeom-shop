@@ -10,9 +10,10 @@ export default function Layout() {
   const { user, isAdmin, signOut } = useAuth()
   const { count } = useCart()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  // 페이지를 옮기면 맨 위로 (#후기 처럼 위치가 지정된 경우는 제외)
+  useEffect(() => { if (!hash) window.scrollTo(0, 0) }, [pathname, hash])
 
   return (
     <div className="app">
@@ -24,6 +25,7 @@ export default function Layout() {
           </Link>
           <nav className="nav">
             <NavLink to="/products" className="hide-sm">전체상품</NavLink>
+            <NavLink to="/location" className="hide-sm">오시는 길</NavLink>
             {isAdmin && <NavLink to="/admin">관리자</NavLink>}
             {user ? (
               <>
@@ -55,6 +57,7 @@ export default function Layout() {
             <Link to="/terms">이용약관</Link>
             <Link to="/privacy"><b>개인정보처리방침</b></Link>
             <Link to="/refund">배송·교환·반품</Link>
+            <Link to="/location">오시는 길</Link>
             <InstallButton className="link-btn footer-install" />
           </div>
           <p>

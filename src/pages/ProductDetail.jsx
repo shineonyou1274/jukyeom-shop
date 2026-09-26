@@ -6,6 +6,7 @@ import ProductImage from '../components/ProductImage'
 import { won } from '../lib/format'
 import { PRODUCT_SELECT, optionsOf, priceLabel } from '../lib/product'
 import { usePageMeta } from '../lib/usePageMeta'
+import Reviews, { Stars, reviewSummary } from '../components/Reviews'
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../config/store'
 
 export default function ProductDetail() {
@@ -16,6 +17,12 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const [optionId, setOptionId] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const loadReviews = () =>
+    supabase.from('reviews').select('*').eq('product_id', id).order('created_at', { ascending: false })
+      .then(({ data }) => setReviews(data || []))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadReviews() }, [id])
   usePageMeta(product?.name, product ? `${product.name} ${product.subtitle || ''}`.trim() : undefined)
 
   useEffect(() => {
@@ -47,6 +54,9 @@ export default function ProductDetail() {
           {product.badge && <span className="tag inline">{product.badge}</span>}
           <h1>{product.name}</h1>
           {product.subtitle && <p className="muted">{product.subtitle}</p>}
+          {reviewSummary(reviews).count > 0 && (
+            <a href="#reviews" className="review-link"><Stars value={reviewSummary(reviews).avg} /> 후기 {reviewSummary(reviews).count}개</a>
+          )}
           <p className="detail-price">{option ? won(option.price) : priceLabel(product)}</p>
 
           {options.length > 0 && (
@@ -113,6 +123,8 @@ export default function ProductDetail() {
           </table>
         </section>
       )}
+
+      <Reviews productId={product.id} reviews={reviews} onChange={loadReviews} />
 
       <section className="description">
         <h2>배송 · 교환 · 반품</h2>

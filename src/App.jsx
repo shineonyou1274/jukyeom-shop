@@ -12,6 +12,7 @@ import { OrderComplete, PaymentFail, PaymentSuccess } from './pages/PaymentResul
 import { Login, ResetPassword, Signup } from './pages/Auth'
 import MyPage from './pages/MyPage'
 import OrderLookup from './pages/OrderLookup'
+import Location from './pages/Location'
 import Admin from './pages/Admin'
 import { Privacy, Refund, Terms } from './pages/Policy'
 
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="terms" element={<Terms />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="refund" element={<Refund />} />
+        <Route path="location" element={<Location />} />
         {!isConfigured ? (
           <Route path="*" element={<SetupNotice />} />
         ) : (

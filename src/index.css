@@ -319,3 +319,39 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .modal h2 { font-family: var(--sans); font-size: 1.05rem; }
 .modal ol { padding-left: 20px; line-height: 1.8; }
 @media (min-width: 900px) { .install-banner { display: none; } }
+
+/* 후기 */
+.stars { letter-spacing: 1px; color: #d8cfbd; white-space: nowrap; }
+.stars .on { color: var(--seal); }
+.review-link { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; color: var(--ink-2); margin-top: 4px; }
+.reviews-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.review-avg { display: flex; align-items: center; gap: 6px; margin: 0; }
+.review-list { list-style: none; padding: 0; margin: 16px 0 0; }
+.review { border-top: 1px solid var(--line); padding: 16px 0; }
+.review-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.review p { margin: 8px 0; }
+.review-img { max-width: 220px; border-radius: 6px; border: 1px solid var(--line); }
+.review-own { display: flex; gap: 12px; color: var(--ink-2); }
+.review-form { margin: 12px 0; }
+.review-form textarea { margin: 10px 0; }
+.review-form-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.review-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }
+.star-pick { display: flex; align-items: center; gap: 2px; }
+.star-pick button { background: none; border: 0; font-size: 1.7rem; line-height: 1; cursor: pointer; color: #d8cfbd; padding: 0 2px; }
+.star-pick button.on { color: var(--seal); }
+.review-write { margin-right: 10px; font-size: .82rem; text-decoration: underline; color: var(--seal); }
+.review-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.review-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.review-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; }
+.review-card p { margin: 0; font-size: .93rem; }
+
+/* 오시는 길 */
+.location-card { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); min-height: 240px; }
+.location-art { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: .9; }
+.location-body { position: relative; display: flex; gap: 16px; align-items: flex-start; padding: 24px; }
+.location-body h2 { margin-bottom: 4px; }
+.location-body p { margin: 0; }
+.map-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+@media (max-width: 640px) { .map-buttons { grid-template-columns: 1fr; } }
+.location-info { grid-template-columns: 100px 1fr; }
+.location-info a { text-decoration: underline; }

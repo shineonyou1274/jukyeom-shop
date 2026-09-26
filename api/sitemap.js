@@ -3,7 +3,7 @@ import { activeProducts, origin } from './_seo.js'
 export default async function handler(req, res) {
   const base = origin(req)
   const products = await activeProducts().catch(() => [])
-  const urls = ['/', '/products', ...products.map((p) => `/products/${p.id}`), '/refund', '/terms', '/privacy']
+  const urls = ['/', '/products', ...products.map((p) => `/products/${p.id}`), '/location', '/refund', '/terms', '/privacy']
   res.setHeader('Content-Type', 'application/xml; charset=utf-8')
   res.setHeader('Cache-Control', 'public, s-maxage=3600')
   res.end(`<?xml version="1.0" encoding="UTF-8"?>

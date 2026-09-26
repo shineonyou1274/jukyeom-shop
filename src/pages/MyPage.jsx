@@ -60,7 +60,15 @@ export function OrderCard({ order }) {
       </div>
       <ul className="mini-list">
         {order.order_items.map((it) => (
-          <li key={it.id}><span>{it.product_name} × {it.quantity}</span><span>{won(it.unit_price * it.quantity)}</span></li>
+          <li key={it.id}>
+            <span>{it.product_name} × {it.quantity}</span>
+            <span>
+              {order.user_id && it.product_id && ['shipped', 'delivered'].includes(order.status) && (
+                <Link to={`/products/${it.product_id}#reviews`} className="review-write">후기 쓰기</Link>
+              )}
+              {won(it.unit_price * it.quantity)}
+            </span>
+          </li>
         ))}
       </ul>
       {order.status === 'awaiting_deposit' && <DepositInfo order={order} />}

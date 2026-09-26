@@ -266,3 +266,81 @@ end $$;
 
 revoke execute on function public.mark_order_paid(uuid, text, text, text) from public, anon, authenticated;
 revoke execute on function public.mark_order_cancelled(uuid, text) from public, anon, authenticated;
+
+-- 7) 구매 후기 ----------------------------------------------------
+create table if not exists public.reviews (
+  id          bigint generated always as identity primary key,
+  product_id  bigint not null references public.products(id) on delete cascade,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  rating      smallint not null check (rating between 1 and 5),
+  content     text not null check (char_length(content) between 5 and 1000),
+  image_url   text,
+  author_name text,                -- 가운데를 가린 이름 (박*엽)
+  is_hidden   boolean not null default false,
+  created_at  timestamptz not null default now(),
+  unique (product_id, user_id)
+);
+create index if not exists reviews_product_idx on public.reviews(product_id, created_at desc);
+alter table public.reviews enable row level security;
+
+create or replace function public.has_purchased(p_product_id bigint)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.orders o join public.order_items oi on oi.order_id = o.id
+     where o.user_id = auth.uid() and oi.product_id = p_product_id
+       and o.status in ('paid','preparing','shipped','delivered'));
+$$;
+revoke execute on function public.has_purchased(bigint) from public, anon;
+grant execute on function public.has_purchased(bigint) to authenticated;
+
+create or replace function public.reviews_before_insert()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare n text;
+begin
+  select coalesce(nullif(trim(name), ''), '고객') into n from public.profiles where id = new.user_id;
+  n := coalesce(n, '고객');
+  new.author_name := case
+    when char_length(n) <= 1 then n
+    when char_length(n) = 2 then left(n, 1) || '*'
+    else left(n, 1) || repeat('*', char_length(n) - 2) || right(n, 1) end;
+  new.is_hidden := false;
+  return new;
+end $$;
+drop trigger if exists reviews_before_insert on public.reviews;
+create trigger reviews_before_insert before insert on public.reviews
+  for each row execute function public.reviews_before_insert();
+revoke execute on function public.reviews_before_insert() from public, anon, authenticated;
+
+drop policy if exists "reviews_select" on public.reviews;
+create policy "reviews_select" on public.reviews for select
+  using (not is_hidden or user_id = auth.uid() or public.is_admin());
+drop policy if exists "reviews_insert" on public.reviews;
+create policy "reviews_insert" on public.reviews for insert
+  with check (user_id = auth.uid() and public.has_purchased(product_id));
+drop policy if exists "reviews_update_own" on public.reviews;
+create policy "reviews_update_own" on public.reviews for update
+  using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
+drop policy if exists "reviews_delete" on public.reviews;
+create policy "reviews_delete" on public.reviews for delete
+  using (user_id = auth.uid() or public.is_admin());
+revoke update on public.reviews from authenticated;
+grant update (rating, content, image_url) on public.reviews to authenticated;
+
+-- 관리자 숨김/보이기
+create or replace function public.set_review_hidden(p_id bigint, p_hidden boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception '관리자만 할 수 있어요.'; end if;
+  update public.reviews set is_hidden = p_hidden where id = p_id;
+end $$;
+revoke execute on function public.set_review_hidden(bigint, boolean) from public, anon;
+grant execute on function public.set_review_hidden(bigint, boolean) to authenticated;
+
+insert into storage.buckets (id, name, public) values ('review-images', 'review-images', true)
+on conflict (id) do nothing;
+drop policy if exists "review_images_insert" on storage.objects;
+create policy "review_images_insert" on storage.objects for insert
+  with check (bucket_id = 'review-images' and auth.uid() is not null and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "review_images_delete" on storage.objects;
+create policy "review_images_delete" on storage.objects for delete
+  using (bucket_id = 'review-images' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));

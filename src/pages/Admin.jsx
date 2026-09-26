@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { callApi } from '../lib/api'
 import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
 import ProductImage from '../components/ProductImage'
+import { Stars } from '../components/Reviews'
 import { PRODUCT_SELECT, priceLabel, stockOf } from '../lib/product'
 
 export default function Admin() {
@@ -15,8 +16,9 @@ export default function Admin() {
       <div className="tabs">
         <button className={tab === 'orders' ? 'on' : ''} onClick={() => setTab('orders')}>주문 관리</button>
         <button className={tab === 'products' ? 'on' : ''} onClick={() => setTab('products')}>상품 관리</button>
+        <button className={tab === 'reviews' ? 'on' : ''} onClick={() => setTab('reviews')}>후기 관리</button>
       </div>
-      {tab === 'orders' ? <AdminOrders /> : <AdminProducts />}
+      {tab === 'orders' ? <AdminOrders /> : tab === 'products' ? <AdminProducts /> : <AdminReviews />}
     </div>
   )
 }
@@ -328,5 +330,51 @@ function ProductForm({ initial, onDone }) {
         <button type="button" className="btn btn-ghost" onClick={onDone}>취소</button>
       </div>
     </form>
+  )
+}
+
+// ───────────────────────── 후기 관리 ─────────────────────────
+function AdminReviews() {
+  const [reviews, setReviews] = useState(null)
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('reviews').select('*, products(name)').order('created_at', { ascending: false }).limit(200)
+    setReviews(data || [])
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  async function toggle(r) {
+    const { error } = await supabase.rpc('set_review_hidden', { p_id: r.id, p_hidden: !r.is_hidden })
+    if (error) alert(error.message)
+    load()
+  }
+  async function remove(r) {
+    if (!confirm('이 후기를 완전히 삭제할까요? (숨기기를 권해요)')) return
+    const { error } = await supabase.from('reviews').delete().eq('id', r.id)
+    if (error) alert(error.message)
+    load()
+  }
+
+  if (!reviews) return <p className="muted">불러오는 중…</p>
+  if (reviews.length === 0) return <p className="muted">아직 후기가 없어요.</p>
+  return (
+    <ul className="order-list">
+      {reviews.map((r) => (
+        <li key={r.id} className={`panel ${r.is_hidden ? 'inactive' : ''}`}>
+          <div className="order-head">
+            <div>
+              <Stars value={r.rating} /> <b>{r.products?.name}</b>
+              <span className="muted small"> · {r.author_name} · {dateTime(r.created_at)}</span>
+              {r.is_hidden && <span className="status s-cancelled"> 숨김</span>}
+            </div>
+          </div>
+          <p className="pre">{r.content}</p>
+          {r.image_url && <img src={r.image_url} alt="" className="review-thumb" />}
+          <div className="admin-actions">
+            <button className="btn btn-ghost sm" onClick={() => toggle(r)}>{r.is_hidden ? '다시 보이기' : '숨기기'}</button>
+            <button className="btn btn-danger sm" onClick={() => remove(r)}>삭제</button>
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
