@@ -25,7 +25,6 @@ export default function Layout() {
           </Link>
           <nav className="nav">
             <NavLink to="/products" className="hide-sm">전체상품</NavLink>
-            <NavLink to="/location" className="hide-sm">오시는 길</NavLink>
             {isAdmin && <NavLink to="/admin">관리자</NavLink>}
             {user ? (
               <>
@@ -38,8 +37,10 @@ export default function Layout() {
                 <NavLink to="/login">로그인</NavLink>
               </>
             )}
-            <NavLink to="/cart" className="cart-link">
-              장바구니{count > 0 && <span className="badge-count">{count}</span>}
+            <NavLink to="/location" className="hide-sm">오시는 길</NavLink>
+            <NavLink to="/cart" className="cart-link" aria-label={`장바구니${count ? ` ${count}개` : ''}`}>
+              <CartIcon />
+              {count > 0 && <span className="badge-count">{count}</span>}
             </NavLink>
           </nav>
         </div>
@@ -72,5 +73,15 @@ export default function Layout() {
         </div>
       </footer>
     </div>
+  )
+}
+
+function CartIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 4h2.2l2.1 10.2a1.6 1.6 0 0 0 1.6 1.3h8.4a1.6 1.6 0 0 0 1.6-1.2L20.5 8H6.1" />
+      <circle cx="9.5" cy="19.5" r="1.3" />
+      <circle cx="17" cy="19.5" r="1.3" />
+    </svg>
   )
 }

@@ -1,9 +1,11 @@
 import { usePageMeta } from '../lib/usePageMeta'
 import { STORE } from '../config/store'
-import { InkMountains, Seal } from '../components/Ink'
+import { Seal } from '../components/Ink'
+import StoreMap from '../components/StoreMap'
 
 const q = encodeURIComponent('천왕봉죽염')
-const addr = encodeURIComponent(STORE.address.replace(/\s*\(.*\)$/, ''))
+const addrText = STORE.address.replace(/\s*\(.*\)$/, '')
+const addr = encodeURIComponent(addrText)
 
 export default function Location() {
   usePageMeta('오시는 길', `${STORE.name} 오시는 길 — ${STORE.address}`)
@@ -11,7 +13,7 @@ export default function Location() {
     <div className="container page narrow">
       <h1>오시는 길</h1>
       <div className="location-card">
-        <InkMountains className="location-art" />
+        <StoreMap address={addrText} name={STORE.name} />
         <div className="location-body">
           <Seal size={44} />
           <div>
