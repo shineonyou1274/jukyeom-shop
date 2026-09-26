@@ -1,12 +1,38 @@
 {
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/robots.txt", "destination": "/api/robots" },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(yeti|naver|googlebot|google-inspectiontool|bingbot|daum|kakaotalk-scrap|kakaostory|facebookexternalhit|twitterbot|slackbot|telegrambot|discordbot|linkedinbot).*"
+        }
+      ],
+      "destination": "/api/seo?path=/"
+    },
     {
       "source": "/:path((?!api/|assets/|images/|videos/|favicon|icon-|apple-touch|manifest|sw\\.js).*)",
-      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(yeti|naver|googlebot|google-inspectiontool|bingbot|daum|kakaotalk-scrap|kakaostory|facebookexternalhit|twitterbot|slackbot|telegrambot|discordbot|linkedinbot).*" }],
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(yeti|naver|googlebot|google-inspectiontool|bingbot|daum|kakaotalk-scrap|kakaostory|facebookexternalhit|twitterbot|slackbot|telegrambot|discordbot|linkedinbot).*"
+        }
+      ],
       "destination": "/api/seo?path=/:path"
     },
-    { "source": "/((?!api/|assets/|favicon).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/|assets/|favicon).*)",
+      "destination": "/index.html"
+    }
   ]
 }
