@@ -3,7 +3,11 @@ export default function ProductImage({ product, className = '' }) {
   if (product?.image_url) {
     return <img className={`product-img ${className}`} src={product.image_url} alt={product.name} loading="lazy" />
   }
-  const nine = /9회|자죽염/.test(product?.name || '')
+  const name = product?.name || ''
+  const nine = /9회/.test(name)
+  // 라벨 글자: 간장·된장은 그 이름으로, 나머지는 죽염
+  const [c1, c2] = /간장/.test(name) && !/된장/.test(name) ? ['간', '장'] : /된장/.test(name) ? ['된', '장'] : ['죽', '염']
+  const sub = /간장|된장/.test(name) ? '숙성' : nine ? '9회' : '3회'
   return (
     <div className={`product-img placeholder ${className}`} role="img" aria-label={product?.name}>
       <svg viewBox="0 0 200 200">
@@ -27,10 +31,10 @@ export default function ProductImage({ product, className = '' }) {
           <path d="M126 80 c8 -4 14 -3 18 -1 c-6 3 -12 3 -18 1z" />
           <path d="M126 96 c-8 -3 -14 -1 -18 2 c6 2 12 1 18 -2z" />
         </g>
-        <text x="86" y="104" textAnchor="middle" fontSize="30" fill="#1f1d1a" fontFamily="'Nanum Brush Script', cursive">죽</text>
-        <text x="86" y="136" textAnchor="middle" fontSize="30" fill="#1f1d1a" fontFamily="'Nanum Brush Script', cursive">염</text>
+        <text x="86" y="104" textAnchor="middle" fontSize="30" fill="#1f1d1a" fontFamily="'Nanum Brush Script', cursive">{c1}</text>
+        <text x="86" y="136" textAnchor="middle" fontSize="30" fill="#1f1d1a" fontFamily="'Nanum Brush Script', cursive">{c2}</text>
         <rect x="104" y="72" width="11" height="11" rx="1" fill="#b83a32" />
-        <text x="86" y="154" textAnchor="middle" fontSize="8" fill="#6b675f" fontFamily="'Noto Serif KR', serif">{nine ? '9회' : '3회'}</text>
+        <text x="86" y="154" textAnchor="middle" fontSize="8" fill="#6b675f" fontFamily="'Noto Serif KR', serif">{sub}</text>
       </svg>
     </div>
   )

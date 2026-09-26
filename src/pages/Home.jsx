@@ -6,10 +6,10 @@ import { won } from '../lib/format'
 import { FREE_SHIPPING_THRESHOLD } from '../config/store'
 
 const STEPS = [
-  ['salt', '천일염', '간수를 충분히 뺀 국산 천일염'],
-  ['bamboo', '대나무', '삼 년 넘게 자란 왕대나무 통에 다져 담고'],
-  ['clay', '황토', '지리산 황토로 입구를 단단히 막아'],
-  ['fire', '소나무 장작불', '소나무 장작불에 굽는다'],
+  ['salt', '천일염', '비금도 천일염을 3년 동안 간수 빼고'],
+  ['bamboo', '대나무', '4년 넘게 자란 지리산 왕대나무 통에 다져 담아'],
+  ['clay', '황토', '진흙으로 입구를 단단히 막고'],
+  ['fire', '소나무 장작불', '1,300℃ 넘는 불길에 굽는다'],
 ]
 
 export default function Home() {
@@ -85,7 +85,7 @@ export default function Home() {
           <div>
             <p className="eyebrow">9회 죽염 · 3회 죽염</p>
             <h2>한지 빛 상자에 담아<br />마음까지 전합니다</h2>
-            <p className="muted">매일 쓰는 3회 죽염부터 아홉 번 구운 9회 자죽염, 명절 선물세트까지.</p>
+            <p className="muted">매일 쓰는 3회 생활죽염부터 아홉 번 구운 9회 죽염, 5년 넘게 숙성한 죽염 된장·간장과 선물세트까지.</p>
             <Link to="/products" className="btn btn-primary">전체 상품 보기</Link>
           </div>
           <Seal size={52} className="showcase-seal" />
