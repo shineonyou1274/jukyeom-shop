@@ -4,11 +4,12 @@ import { won } from './format'
 export const optionsOf = (p) =>
   (p?.product_options || []).filter((o) => o.is_active !== false).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
 
+// 목록용 가격: 용량이 여러 개면 가장 싼 용량 기준으로 "80g 28,000원~"
 export function priceLabel(p) {
   const opts = optionsOf(p)
   if (opts.length === 0) return won(p.price)
-  const min = Math.min(...opts.map((o) => o.price))
-  return opts.length > 1 ? `${won(min)}~` : won(min)
+  const cheapest = opts.reduce((a, b) => (b.price < a.price ? b : a))
+  return opts.length > 1 ? `${cheapest.label} ${won(cheapest.price)}~` : won(cheapest.price)
 }
 
 export const stockOf = (p) => {

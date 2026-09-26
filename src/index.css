@@ -298,3 +298,12 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .options-editor .opt-row { display: grid; grid-template-columns: 1.3fr 1fr .8fr auto; gap: 6px; margin-bottom: 6px; align-items: center; }
 .options-editor .opt-row input { padding: 8px 10px; font-size: .92rem; }
 .options-editor .opt-head { font-size: .8rem; color: var(--ink-3); }
+
+/* 광고 영상 */
+.video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.video-card { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.video-card video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #e6dcc7; object-fit: cover; }
+.video-card figcaption { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 2px; }
+.video-card figcaption b { font-family: var(--serif); }
+.video-card figcaption span { font-size: .86rem; color: var(--ink-2); }
+@media (max-width: 860px) { .video-grid { grid-template-columns: 1fr; gap: 16px; } }

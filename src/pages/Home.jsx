@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { Bamboo, InkBlot, InkMountains, ProcessIcon, Seal } from '../components/Ink'
+import AdVideos from '../components/AdVideos'
 import { useProducts } from '../lib/useProducts'
 import { won } from '../lib/format'
 import { FREE_SHIPPING_THRESHOLD } from '../config/store'
@@ -74,6 +75,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <AdVideos />
 
       <section className="container section showcase">
         <div className="showcase-media">
