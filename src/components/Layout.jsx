@@ -51,7 +51,8 @@ export default function Layout() {
             <Link to="/refund">교환·환불 정책</Link>
           </div>
           <p>
-            상호 {STORE.name} · 대표 {STORE.owner} · 사업자등록번호 {STORE.bizNo} · 통신판매업신고 {STORE.mailOrderNo}
+            상호 {STORE.name} · 대표 {STORE.owner} · 사업자등록번호 {STORE.bizNo} · 통신판매업신고 {STORE.mailOrderNo}{' '}
+            <a href={`https://www.ftc.go.kr/bizCommPop.do?wrkr_no=${STORE.bizNo.replace(/-/g, '')}`} target="_blank" rel="noreferrer" className="biz-check">[사업자정보확인]</a>
             <br />
             주소 {STORE.address} · 고객센터 {STORE.phone}{STORE.mobile && ` / ${STORE.mobile}`} ({STORE.csHours}) · {STORE.email}
             <br />
