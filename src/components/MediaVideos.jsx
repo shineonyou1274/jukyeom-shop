@@ -4,8 +4,8 @@ import { useState } from 'react'
 // 첫 번째가 크게, vertical(쇼츠)은 오른쪽 세로 칸에 들어간다
 const MEDIA = [
   { type: 'drive', id: '1Q0Zt_0PO4GbNuPsPiRWMSS-kBDiao2es', title: 'TV 방송 〈오늘 아침〉에 나온 천왕봉 죽염' },
-  { type: 'youtube', id: 'XcKvRxVqkvo', title: '천왕봉 죽염이 나온 영상' },
-  { type: 'youtube', id: 'SumIDZuwGRc', title: '천왕봉 죽염이 나온 영상' },
+  { type: 'youtube', id: 'XcKvRxVqkvo', title: '천왕봉죽염, 대나무 선별 방법', by: '산청농부들' },
+  { type: 'youtube', id: 'SumIDZuwGRc', title: '천왕봉죽염을 소개합니다', by: '산청웰니스관광협동조합' },
   { type: 'youtube', id: 'SdaRKKrprcU', title: '물에 타서 마셔도 좋은 천왕봉 죽염소금', vertical: true },
 ]
 
@@ -30,7 +30,7 @@ function MediaCard({ m }) {
           </button>
         )}
       </div>
-      <figcaption>{m.title}</figcaption>
+      <figcaption>{m.title}{m.by && <small>{m.by}</small>}</figcaption>
     </figure>
   )
 }
