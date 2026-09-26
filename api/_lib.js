@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-export const SHIPPING_FEE = 3000
-export const FREE_SHIPPING_THRESHOLD = 30000
+export { SHIPPING_FEE, FREE_SHIPPING_THRESHOLD } from '../src/config/store.js'
 
 let admin
 export function supabaseAdmin() {

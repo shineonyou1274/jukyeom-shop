@@ -156,7 +156,7 @@ function AdminOrderCard({ order, onChange }) {
 }
 
 // ───────────────────────── 상품 관리 ─────────────────────────
-const EMPTY = { name: '', subtitle: '', description: '', price: '', stock: '', badge: '', image_url: '', is_active: true, sort_order: 0 }
+const EMPTY = { name: '', subtitle: '', description: '', info_notice: '', price: '', stock: '', badge: '', image_url: '', is_active: true, sort_order: 0 }
 
 function AdminProducts() {
   const [products, setProducts] = useState(null)
@@ -220,6 +220,7 @@ function ProductForm({ initial, onDone }) {
       name: form.name.trim(),
       subtitle: form.subtitle?.trim() || null,
       description: form.description || null,
+      info_notice: form.info_notice?.trim() || null,
       price: Number(form.price),
       stock: Number(form.stock),
       badge: form.badge?.trim() || null,
@@ -263,6 +264,7 @@ function ProductForm({ initial, onDone }) {
             <label>진열 순서<input type="number" value={form.sort_order} onChange={set('sort_order')} /></label>
           </div>
           <label>상세 설명<textarea rows={8} value={form.description || ''} onChange={set('description')} /></label>
+          <label>상품정보 제공고시 (한 줄에 "항목: 내용")<textarea rows={6} value={form.info_notice || ''} onChange={set('info_notice')} placeholder={'식품의 유형: 기타가공품(죽염)\n내용량: 250g\n원재료명 및 함량: 천일염(국산) 100%'} /></label>
           <label className="check"><input type="checkbox" checked={form.is_active} onChange={set('is_active')} /> 판매중 (끄면 손님에게 안 보여요)</label>
           <p className="hint">※ 식품은 "병이 낫는다", "치료·예방" 같은 효능 표현을 쓰면 법 위반이에요. 원재료·제조방법·맛 위주로 적어 주세요.</p>
         </div>

@@ -24,5 +24,5 @@ export const BANK = {
   dueDays: 3,      // 입금 기한 (주문일로부터 며칠)
 }
 
-export const SHIPPING_FEE = 3000
+export const SHIPPING_FEE = 4000       // 기본 택배비 (도서·산간은 추가 요금 별도 안내)
 export const FREE_SHIPPING_THRESHOLD = 30000

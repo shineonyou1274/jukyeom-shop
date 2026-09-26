@@ -50,6 +50,7 @@ create table if not exists public.products (
   price        integer not null check (price > 0),
   stock        integer not null default 0 check (stock >= 0),
   image_url    text,
+  info_notice  text,          -- 상품정보제공고시 (한 줄에 "항목: 내용")
   badge        text,
   is_active    boolean not null default true,
   sort_order   integer not null default 0,

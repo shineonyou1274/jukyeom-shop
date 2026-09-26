@@ -280,3 +280,10 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .agree-detail { margin: 4px 0 0 26px; line-height: 1.6; }
 .copy-orderer { float: right; margin-top: -34px; text-decoration: underline; color: var(--ink-2); }
 .summary .error { overflow-wrap: anywhere; }
+
+.info-table { width: 100%; border-collapse: collapse; font-size: .92rem; background: var(--card); }
+.info-table th, .info-table td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+.info-table th { width: 32%; background: var(--paper-2); font-weight: 500; color: var(--ink-2); }
+.ship-notes { padding-left: 18px; color: var(--ink-2); font-size: .93rem; }
+.ship-notes a { text-decoration: underline; }
+@media (max-width: 520px) { .info-table th { width: 38%; } }

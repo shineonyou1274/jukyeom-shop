@@ -69,6 +69,31 @@ export default function ProductDetail() {
         <h2>상품 설명</h2>
         <p className="pre">{product.description || '상품 설명이 준비 중이에요.'}</p>
       </section>
+
+      {product.info_notice && (
+        <section className="description">
+          <h2>상품정보 제공고시</h2>
+          <table className="info-table">
+            <tbody>
+              {product.info_notice.split('\n').filter((l) => l.trim()).map((line, i) => {
+                const at = line.indexOf(':')
+                return at > 0
+                  ? <tr key={i}><th>{line.slice(0, at).trim()}</th><td>{line.slice(at + 1).trim()}</td></tr>
+                  : <tr key={i}><td colSpan={2}>{line}</td></tr>
+              })}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      <section className="description">
+        <h2>배송 · 교환 · 반품</h2>
+        <ul className="ship-notes">
+          <li>결제일로부터 토요일·공휴일을 제외하고 1~3일 안에 받아보실 수 있어요.</li>
+          <li>택배비 {won(SHIPPING_FEE)} ({won(FREE_SHIPPING_THRESHOLD)} 이상 무료). 도서·산간 지역은 추가 배송비가 있을 수 있어요.</li>
+          <li>받으신 날로부터 7일 이내 교환·반품 가능 (포장을 개봉해 사용한 경우 제외). <Link to="/refund">자세히 보기</Link></li>
+        </ul>
+      </section>
     </div>
   )
 }
