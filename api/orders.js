@@ -47,7 +47,7 @@ export default postHandler(async (req, body) => {
 
   // card = 토스 결제위젯(카드·간편결제·가상계좌), bank = 가게 계좌로 직접 입금
   const bank = body.paymentType === 'bank'
-  if (bank && !BANK.account) throw new HttpError(400, '무통장입금은 아직 준비 중이에요.')
+  if (bank && !(BANK.enabled && BANK.account)) throw new HttpError(400, '무통장입금은 아직 준비 중이에요.')
   const depositorName = bank ? required(body.depositorName, '입금자명').slice(0, 30) : null
 
   const s = body.shipping || {}

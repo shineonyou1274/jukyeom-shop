@@ -12,14 +12,15 @@ export const STORE = {
   mobile: '010-8513-1274',
   email: '1274salt@gmail.com',
   privacyOfficer: '박상엽',             // 개인정보 보호책임자
-  csHours: '평일 09:00 ~ 18:00 (주말·공휴일 휴무)',
+  csHours: '연중무휴',
 }
 
-// 무통장입금 계좌: account를 비워 두면 결제 화면에 무통장입금이 나타나지 않아요.
+// 무통장입금 계좌: enabled를 true로 바꾸면 결제 화면에 무통장입금이 나타나요.
 export const BANK = {
-  bank: '',        // 예) '농협은행'
-  account: '',     // 예) '000-0000-0000-00'
-  holder: '',      // 예금주
+  enabled: false,  // 토스 가상계좌와 무통장입금 중 결정되면 켜기
+  bank: '농협은행',
+  account: '835013-52-061658',
+  holder: '박상엽',
   dueDays: 3,      // 입금 기한 (주문일로부터 며칠)
 }
 

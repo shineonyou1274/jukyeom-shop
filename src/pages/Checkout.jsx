@@ -161,7 +161,7 @@ export default function Checkout() {
 
           <section className="panel">
             <h2>결제 수단</h2>
-            {BANK.account && (
+            {BANK.enabled && BANK.account && (
               <div className="pay-methods" role="radiogroup" aria-label="결제 수단">
                 <button type="button" role="radio" aria-checked={method === 'card'} className={method === 'card' ? 'on' : ''} onClick={() => setMethod('card')}>
                   카드 · 간편결제
