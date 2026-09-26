@@ -1,11 +1,12 @@
 import { useState } from 'react'
 
 // 천왕봉 죽염이 나온 방송·유튜브 영상. 처음에는 미리보기 사진만 보여주고, 누르면 그때 영상을 불러온다
+// 첫 번째가 크게, vertical(쇼츠)은 오른쪽 세로 칸에 들어간다
 const MEDIA = [
+  { type: 'drive', id: '1Q0Zt_0PO4GbNuPsPiRWMSS-kBDiao2es', title: 'TV 방송 〈오늘 아침〉에 나온 천왕봉 죽염' },
   { type: 'youtube', id: 'XcKvRxVqkvo', title: '천왕봉 죽염이 나온 영상' },
   { type: 'youtube', id: 'SumIDZuwGRc', title: '천왕봉 죽염이 나온 영상' },
-  { type: 'youtube', id: 'SdaRKKrprcU', title: '천왕봉 죽염 쇼츠', vertical: true },
-  { type: 'drive', id: '1Q0Zt_0PO4GbNuPsPiRWMSS-kBDiao2es', title: '천왕봉 죽염 영상', vertical: true },
+  { type: 'youtube', id: 'SdaRKKrprcU', title: '물에 타서 마셔도 좋은 천왕봉 죽염소금', vertical: true },
 ]
 
 const thumb = (m) => m.type === 'youtube'
@@ -35,15 +36,12 @@ function MediaCard({ m }) {
 }
 
 export default function MediaVideos() {
-  const wide = MEDIA.filter((m) => !m.vertical)
-  const tall = MEDIA.filter((m) => m.vertical)
   return (
     <section className="container section media">
       <div className="section-head">
         <h2>방송·영상 속 천왕봉 죽염</h2>
       </div>
-      <div className="media-grid">{wide.map((m) => <MediaCard key={m.id} m={m} />)}</div>
-      {tall.length > 0 && <div className="media-grid tall">{tall.map((m) => <MediaCard key={m.id} m={m} />)}</div>}
+      <div className="media-grid">{MEDIA.map((m) => <MediaCard key={m.id} m={m} />)}</div>
     </section>
   )
 }
