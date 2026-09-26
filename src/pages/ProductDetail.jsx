@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext'
 import ProductImage from '../components/ProductImage'
 import { won } from '../lib/format'
 import { PRODUCT_SELECT, optionsOf, priceLabel } from '../lib/product'
+import { usePageMeta } from '../lib/usePageMeta'
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../config/store'
 
 export default function ProductDetail() {
@@ -15,6 +16,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const [optionId, setOptionId] = useState(null)
+  usePageMeta(product?.name, product ? `${product.name} ${product.subtitle || ''}`.trim() : undefined)
 
   useEffect(() => {
     supabase.from('products').select(PRODUCT_SELECT).eq('id', id).maybeSingle().then(({ data }) => {

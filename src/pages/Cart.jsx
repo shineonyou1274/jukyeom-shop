@@ -1,3 +1,4 @@
+import { usePageMeta } from '../lib/usePageMeta'
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
@@ -9,6 +10,7 @@ import { FREE_SHIPPING_THRESHOLD } from '../config/store'
 import { PRODUCT_SELECT } from '../lib/product'
 
 export default function Cart() {
+  usePageMeta('장바구니')
   const cart = useCart()
   const navigate = useNavigate()
   const ids = cart.items.map((i) => i.id).join(',')

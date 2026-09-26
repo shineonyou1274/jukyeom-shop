@@ -1,3 +1,4 @@
+import { usePageMeta } from '../lib/usePageMeta'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -7,6 +8,7 @@ import { STORE } from '../config/store'
 import DepositInfo from '../components/DepositInfo'
 
 export default function MyPage() {
+  usePageMeta('마이페이지')
   const { user, profile, refreshProfile } = useAuth()
   const [orders, setOrders] = useState(null)
   const [tab, setTab] = useState('orders')

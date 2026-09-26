@@ -1,3 +1,4 @@
+import { usePageMeta } from '../lib/usePageMeta'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { callApi } from '../lib/api'
@@ -6,6 +7,7 @@ import { OrderCard } from './MyPage'
 
 // 비회원 주문조회: 주문번호 + 주문자 휴대폰 번호
 export default function OrderLookup() {
+  usePageMeta('비회원 주문조회')
   const [orderNo, setOrderNo] = useState('')
   const [phone, setPhone] = useState('')
   const [order, setOrder] = useState(null)

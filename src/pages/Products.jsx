@@ -1,7 +1,9 @@
+import { usePageMeta } from '../lib/usePageMeta'
 import ProductCard from '../components/ProductCard'
 import { useProducts } from '../lib/useProducts'
 
 export default function Products() {
+  usePageMeta('전체상품')
   const { products, error } = useProducts()
   return (
     <div className="container page">

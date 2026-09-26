@@ -1,3 +1,4 @@
+import { usePageMeta } from '../lib/usePageMeta'
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { callApi } from '../lib/api'
@@ -6,6 +7,7 @@ import ProductImage from '../components/ProductImage'
 import { PRODUCT_SELECT, priceLabel, stockOf } from '../lib/product'
 
 export default function Admin() {
+  usePageMeta('관리자')
   const [tab, setTab] = useState('orders')
   return (
     <div className="container page">

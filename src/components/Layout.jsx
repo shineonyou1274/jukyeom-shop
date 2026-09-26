@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { STORE } from '../config/store'
 import { Seal } from './Ink'
+import { InstallBanner, InstallButton } from './InstallApp'
 
 export default function Layout() {
   const { user, isAdmin, signOut } = useAuth()
@@ -46,12 +47,15 @@ export default function Layout() {
         <Outlet />
       </main>
 
+      <InstallBanner />
+
       <footer className="footer">
         <div className="container">
           <div className="footer-links">
             <Link to="/terms">이용약관</Link>
             <Link to="/privacy"><b>개인정보처리방침</b></Link>
             <Link to="/refund">배송·교환·반품</Link>
+            <InstallButton className="link-btn footer-install" />
           </div>
           <p>
             상호 {STORE.name} · 대표 {STORE.owner} · 사업자등록번호 {STORE.bizNo} · 통신판매업신고 {STORE.mailOrderNo}{' '}

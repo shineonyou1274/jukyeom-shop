@@ -1,3 +1,4 @@
+import { usePageMeta } from '../lib/usePageMeta'
 import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { Bamboo, InkBlot, InkMountains, ProcessIcon, Seal } from '../components/Ink'
@@ -14,6 +15,7 @@ const STEPS = [
 ]
 
 export default function Home() {
+  usePageMeta()
   const { products } = useProducts()
 
   return (
