@@ -12,6 +12,7 @@ function page({ base, path, title, desc, image, body, jsonld }) {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}" />
+<meta name="naver-site-verification" content="eba236c3cdd027ea9bd34c92efc61cf3a2ea4c77" />
 <link rel="canonical" href="${esc(url)}" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="${esc(STORE.name)}" />
