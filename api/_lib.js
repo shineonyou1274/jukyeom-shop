@@ -46,6 +46,14 @@ export async function requireUser(req) {
   return data.user
 }
 
+// 로그인 토큰이 있으면 회원, 없으면 비회원(null)
+export async function optionalUser(req) {
+  if (!req.headers.authorization) return null
+  return requireUser(req)
+}
+
+export const digits = (v) => String(v ?? '').replace(/\D/g, '')
+
 export async function requireAdmin(req) {
   const user = await requireUser(req)
   const { data } = await supabaseAdmin().from('profiles').select('is_admin').eq('id', user.id).single()

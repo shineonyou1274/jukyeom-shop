@@ -46,7 +46,7 @@ export default function MyPage() {
   )
 }
 
-function OrderCard({ order }) {
+export function OrderCard({ order }) {
   return (
     <li className="panel order">
       <div className="order-head">

@@ -45,10 +45,18 @@ export function OrderComplete() {
   const { orderNo } = useParams()
   const [order, setOrder] = useState()
   useEffect(() => {
-    supabase.from('orders').select('*').eq('order_no', orderNo).maybeSingle().then(({ data }) => setOrder(data))
+    ;(async () => {
+      const { data } = await supabase.from('orders').select('*').eq('order_no', orderNo).maybeSingle()
+      if (data) return setOrder(data)
+      // 비회원 주문: 주문할 때 입력한 휴대폰 번호로 조회
+      let phone = ''
+      try { phone = sessionStorage.getItem('guest-phone') || '' } catch { /* 무시 */ }
+      if (!phone) return setOrder(null)
+      callApi('order-lookup', { orderNo, phone }).then(({ order }) => setOrder(order)).catch(() => setOrder(null))
+    })()
   }, [orderNo])
   if (order === undefined) return <div className="container page narrow center"><p className="muted">불러오는 중…</p></div>
-  if (!order) return <div className="container page narrow center"><p>주문을 찾을 수 없어요. <Link to="/mypage">주문 내역</Link></p></div>
+  if (!order) return <div className="container page narrow center"><p>주문을 찾을 수 없어요. <Link to="/order/lookup">주문 조회</Link></p></div>
   return <OrderDone order={order} />
 }
 
@@ -66,8 +74,11 @@ function OrderDone({ order }) {
         <dt>결제수단</dt><dd>{order.payment_method}</dd>
         <dt className="total">결제금액</dt><dd className="total">{won(order.total_amount)}</dd>
       </dl>
+      {!order.user_id && (
+        <p className="notice">비회원 주문이에요. <b>주문번호 {order.order_no}</b>와 휴대폰 번호로 주문을 조회할 수 있어요. 주문번호를 꼭 메모해 두세요.</p>
+      )}
       <div className="hero-actions">
-        <Link to="/mypage" className="btn btn-primary">주문 내역 보기</Link>
+        <Link to={order.user_id ? '/mypage' : '/order/lookup'} className="btn btn-primary">{order.user_id ? '주문 내역 보기' : '비회원 주문조회'}</Link>
         <Link to="/" className="btn btn-ghost">홈으로</Link>
       </div>
     </div>

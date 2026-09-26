@@ -1,4 +1,4 @@
-import { FREE_SHIPPING_THRESHOLD, HttpError, SHIPPING_FEE, postHandler, requireUser, supabaseAdmin } from './_lib.js'
+import { FREE_SHIPPING_THRESHOLD, HttpError, SHIPPING_FEE, digits, optionalUser, postHandler, supabaseAdmin } from './_lib.js'
 import { BANK } from '../src/config/store.js'
 
 function makeOrderNo() {
@@ -16,7 +16,13 @@ const required = (v, label) => {
 
 // 주문 생성: 가격은 반드시 DB 기준으로 서버에서 계산한다 (브라우저 값은 믿지 않음)
 export default postHandler(async (req, body) => {
-  const user = await requireUser(req)
+  const user = await optionalUser(req)
+  // 비회원 주문: 주문 조회에 쓸 주문자 정보와 개인정보 수집 동의가 필요하다
+  const guest = body.guest || {}
+  if (!user) {
+    if (!guest.agreePrivacy) throw new HttpError(400, '개인정보 수집·이용에 동의해 주세요.')
+    if (digits(guest.phone).length < 10) throw new HttpError(400, '주문자 휴대폰 번호를 정확히 입력해 주세요.')
+  }
   const db = supabaseAdmin()
 
   const items = Array.isArray(body.items) ? body.items : []
@@ -53,7 +59,10 @@ export default postHandler(async (req, body) => {
   const s = body.shipping || {}
   const { data: order, error: orderErr } = await db.from('orders').insert({
     order_no: makeOrderNo(),
-    user_id: user.id,
+    user_id: user?.id ?? null,
+    orderer_name: user ? null : required(guest.name, '주문자 이름').slice(0, 30),
+    orderer_phone: user ? null : digits(guest.phone),
+    orderer_email: user ? user.email : String(guest.email ?? '').trim().slice(0, 100) || null,
     order_name: orderName.slice(0, 100),
     items_amount: itemsAmount,
     shipping_fee: shippingFee,

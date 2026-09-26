@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { callApi } from '../lib/api'
-import { ORDER_STATUS, dateTime, won } from '../lib/format'
+import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
 import ProductImage from '../components/ProductImage'
 
 export default function Admin() {
@@ -118,7 +118,8 @@ function AdminOrderCard({ order, onChange }) {
         ))}
       </ul>
       <div className="ship-box small">
-        <b>{order.receiver_name}</b> · {order.receiver_phone}
+        {!order.user_id && <><span className="status">비회원</span> 주문자 {order.orderer_name} · {phoneFormat(order.orderer_phone || '')}<br /></>}
+        받는 분 <b>{order.receiver_name}</b> · {order.receiver_phone}
         <br />({order.zipcode}) {order.address1} {order.address2}
         {order.memo && <><br />메모: {order.memo}</>}
         <br /><span className="muted">결제: {order.payment_method}{order.depositor_name && ` · 입금자명 ${order.depositor_name}`}</span>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
+import { ANONYMOUS, loadTossPayments } from '@tosspayments/tosspayments-sdk'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { callApi } from '../lib/api'
@@ -13,8 +13,33 @@ import { BANK } from '../config/store'
 const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY
 
 export default function Checkout() {
+  const { user, loading } = useAuth()
+  const cart = useCart()
+  const [guestMode, setGuestMode] = useState(false)
+
+  if (cart.items.length === 0) return <Navigate to="/cart" replace />
+  if (loading) return <div className="container page"><p className="muted">불러오는 중…</p></div>
+  if (!user && !guestMode) {
+    return (
+      <div className="container page auth center">
+        <h1>주문하기</h1>
+        <div className="panel">
+          <p>회원이시면 로그인하고 주문하시면 주문 내역을 편하게 볼 수 있어요.</p>
+          <Link to="/login?next=/checkout" className="btn btn-primary block">로그인하고 주문하기</Link>
+          <button type="button" className="btn btn-ghost block guest-btn" onClick={() => setGuestMode(true)}>비회원으로 주문하기</button>
+          <p className="small muted">아직 회원이 아니신가요? <Link to="/signup?next=/checkout">회원가입</Link></p>
+        </div>
+      </div>
+    )
+  }
+  return <CheckoutForm />
+}
+
+function CheckoutForm() {
   const { user, profile } = useAuth()
   const cart = useCart()
+  const customerKey = user?.id ?? ANONYMOUS
+  const [guest, setGuest] = useState({ name: '', phone: '', email: '', agreePrivacy: false })
   const widgetsRef = useRef(null)
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -46,7 +71,7 @@ export default function Checkout() {
     ;(async () => {
       try {
         const toss = await loadTossPayments(CLIENT_KEY)
-        const widgets = toss.widgets({ customerKey: user.id })
+        const widgets = toss.widgets({ customerKey })
         await widgets.setAmount({ currency: 'KRW', value: cart.total })
         if (cancelled) return
         const [methods, agreement] = await Promise.all([
@@ -69,13 +94,11 @@ export default function Checkout() {
     }
     // 위젯은 한 번만 그리고, 금액 변경은 아래 effect에서 처리
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id, cart.items.length === 0])
+  }, [customerKey, cart.items.length === 0])
 
   useEffect(() => {
     widgetsRef.current?.setAmount({ currency: 'KRW', value: cart.total })
   }, [cart.total, ready])
-
-  if (cart.items.length === 0) return <Navigate to="/cart" replace />
 
   const set = (k) => (e) => setForm({ ...form, [k]: k === 'phone' ? phoneFormat(e.target.value) : e.target.value })
 
@@ -94,9 +117,14 @@ export default function Checkout() {
     if (!form.zipcode || !form.address1) return setError('주소 검색으로 배송지를 입력해 주세요.')
     if (form.phone.replace(/\D/g, '').length < 10) return setError('연락처를 정확히 입력해 주세요.')
     if (method === 'bank' && !(depositor || form.name).trim()) return setError('입금자명을 입력해 주세요.')
+    if (!user) {
+      if (!guest.name.trim()) return setError('주문자 이름을 입력해 주세요.')
+      if (guest.phone.replace(/\D/g, '').length < 10) return setError('주문자 휴대폰 번호를 정확히 입력해 주세요.')
+      if (!guest.agreePrivacy) return setError('비회원 주문을 위한 개인정보 수집·이용에 동의해 주세요.')
+    }
     setBusy(true)
     try {
-      if (saveAddress) {
+      if (user && saveAddress) {
         const { name, phone, zipcode, address1, address2 } = form
         await supabase.from('profiles').update({ name, phone, zipcode, address1, address2 }).eq('id', user.id)
       }
@@ -106,10 +134,15 @@ export default function Checkout() {
         shipping: form,
         paymentType: method,
         depositorName: depositor || form.name,
+        ...(!user && { guest }),
       })
+      // 비회원은 주문 완료·조회 화면에서 휴대폰 번호로 주문을 확인한다
+      if (!user) {
+        try { sessionStorage.setItem('guest-phone', guest.phone) } catch { /* 저장 불가 환경 무시 */ }
+      }
       if (method === 'bank') {
-        cart.clear()
-        return navigate(`/order/complete/${order.orderNo}`, { replace: true })
+        navigate(`/order/complete/${order.orderNo}`, { replace: true })
+        return cart.clear()
       }
       const widgets = widgetsRef.current
       await widgets.setAmount({ currency: 'KRW', value: order.amount })
@@ -118,9 +151,9 @@ export default function Checkout() {
         orderName: order.orderName,
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/payment/fail`,
-        customerEmail: user.email,
-        customerName: form.name,
-        customerMobilePhone: form.phone.replace(/\D/g, ''),
+        customerEmail: user?.email || guest.email || undefined,
+        customerName: user ? form.name : guest.name,
+        customerMobilePhone: (user ? form.phone : guest.phone).replace(/\D/g, ''),
       })
     } catch (e) {
       if (e.code !== 'USER_CANCEL') setError(e.message || '결제를 시작하지 못했어요.')
@@ -133,8 +166,34 @@ export default function Checkout() {
       <h1>주문/결제</h1>
       <form className="checkout-grid" onSubmit={pay}>
         <div>
+          {!user && (
+            <section className="panel">
+              <h2>주문자 정보 <span className="small muted">(비회원)</span></h2>
+              <div className="form-row two">
+                <label>이름<input value={guest.name} onChange={(e) => setGuest({ ...guest, name: e.target.value })} required maxLength={30} autoComplete="name" /></label>
+                <label>휴대폰<input value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: phoneFormat(e.target.value) })} required inputMode="tel" placeholder="010-0000-0000" autoComplete="tel" /></label>
+              </div>
+              <label>이메일 (선택 · 결제 영수증을 받을 수 있어요)<input type="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} autoComplete="email" /></label>
+              <p className="hint">주문번호와 이 휴대폰 번호로 <b>비회원 주문조회</b>를 할 수 있어요.</p>
+              <div className="agree">
+                <label className="check">
+                  <input type="checkbox" checked={guest.agreePrivacy} onChange={(e) => setGuest({ ...guest, agreePrivacy: e.target.checked })} />
+                  (필수) 비회원 주문을 위한 개인정보 수집·이용 동의
+                </label>
+                <p className="small muted agree-detail">
+                  수집 항목: 주문자 이름·휴대폰·이메일, 받는 분 이름·연락처·주소 / 목적: 주문 처리·배송·주문 조회 /
+                  보유 기간: 전자상거래법에 따라 5년. <Link to="/privacy" target="_blank">개인정보처리방침</Link>
+                </p>
+              </div>
+            </section>
+          )}
           <section className="panel">
             <h2>배송지</h2>
+            {!user && (
+              <button type="button" className="link-btn small copy-orderer" onClick={() => setForm({ ...form, name: guest.name, phone: guest.phone })}>
+                주문자와 같아요
+              </button>
+            )}
             <div className="form-row two">
               <label>받는 분<input value={form.name} onChange={set('name')} required maxLength={30} /></label>
               <label>연락처<input value={form.phone} onChange={set('phone')} required inputMode="tel" placeholder="010-0000-0000" /></label>
@@ -146,7 +205,7 @@ export default function Checkout() {
             <label>주소<input value={form.address1} readOnly onClick={findAddress} placeholder="주소 검색을 눌러 주세요" /></label>
             <label>상세주소<input value={form.address2} onChange={set('address2')} placeholder="동·호수 등" maxLength={100} /></label>
             <label>배송 메모<input value={form.memo} onChange={set('memo')} placeholder="예) 문 앞에 놓아 주세요" maxLength={200} /></label>
-            <label className="check"><input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} /> 기본 배송지로 저장</label>
+            {user && <label className="check"><input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} /> 기본 배송지로 저장</label>}
           </section>
 
           <section className="panel">

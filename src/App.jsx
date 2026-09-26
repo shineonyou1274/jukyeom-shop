@@ -11,6 +11,7 @@ import Checkout from './pages/Checkout'
 import { OrderComplete, PaymentFail, PaymentSuccess } from './pages/PaymentResult'
 import { Login, ResetPassword, Signup } from './pages/Auth'
 import MyPage from './pages/MyPage'
+import OrderLookup from './pages/OrderLookup'
 import Admin from './pages/Admin'
 import { Privacy, Refund, Terms } from './pages/Policy'
 
@@ -29,10 +30,11 @@ export default function App() {
             <Route path="products" element={<Products />} />
             <Route path="products/:id" element={<ProductDetail />} />
             <Route path="cart" element={<Cart />} />
-            <Route path="checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
-            <Route path="payment/success" element={<RequireAuth><PaymentSuccess /></RequireAuth>} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="payment/success" element={<PaymentSuccess />} />
             <Route path="payment/fail" element={<PaymentFail />} />
-            <Route path="order/complete/:orderNo" element={<RequireAuth><OrderComplete /></RequireAuth>} />
+            <Route path="order/complete/:orderNo" element={<OrderComplete />} />
+            <Route path="order/lookup" element={<OrderLookup />} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
             <Route path="reset-password" element={<ResetPassword />} />

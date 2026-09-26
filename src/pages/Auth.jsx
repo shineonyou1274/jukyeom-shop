@@ -50,6 +50,7 @@ export function Login() {
           <Link to={`/signup?next=${encodeURIComponent(next)}`}>회원가입</Link>
           <Link to="/reset-password">비밀번호 찾기</Link>
         </div>
+        <div className="auth-links"><span className="muted">비회원으로 주문하셨나요?</span><Link to="/order/lookup">비회원 주문조회</Link></div>
       </form>
     </div>
   )

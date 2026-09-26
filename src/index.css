@@ -274,3 +274,9 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .s-awaiting_deposit { background: #f6e8d6; color: #8a5320; }
 .spec dd a, .hint a { text-decoration: underline; }
 .biz-check { color: #e8e2d4; text-decoration: underline; }
+.guest-btn { margin-top: 10px; }
+.auth .panel > p { margin: 0 0 16px; }
+.auth .panel > p.small { margin: 14px 0 0; }
+.agree-detail { margin: 4px 0 0 26px; line-height: 1.6; }
+.copy-orderer { float: right; margin-top: -34px; text-decoration: underline; color: var(--ink-2); }
+.summary .error { overflow-wrap: anywhere; }

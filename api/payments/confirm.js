@@ -1,15 +1,16 @@
-import { HttpError, postHandler, requireUser, supabaseAdmin, tossAuthHeader } from '../_lib.js'
+import { HttpError, optionalUser, postHandler, supabaseAdmin, tossAuthHeader } from '../_lib.js'
 import { bankName } from '../_banks.js'
 
 // 토스 결제창에서 돌아온 뒤 호출: 금액을 검증하고 토스에 최종 승인을 요청한다
 export default postHandler(async (req, body) => {
-  const user = await requireUser(req)
+  const user = await optionalUser(req)
   const db = supabaseAdmin()
   const { paymentKey, orderId, amount } = body
   if (!paymentKey || !orderId) throw new HttpError(400, '결제 정보가 올바르지 않아요.')
 
   const { data: order } = await db.from('orders').select('*').eq('order_no', orderId).single()
-  if (!order || order.user_id !== user.id) throw new HttpError(404, '주문을 찾을 수 없어요.')
+  // 회원 주문은 본인만, 비회원 주문은 토스가 발급한 paymentKey로 확인한다
+  if (!order || (order.user_id && order.user_id !== user?.id)) throw new HttpError(404, '주문을 찾을 수 없어요.')
   if (order.status !== 'pending') {
     // 새로고침 등으로 두 번 호출된 경우: 이미 처리된 주문이면 그대로 돌려준다
     if (order.payment_key === paymentKey) return { order }

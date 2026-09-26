@@ -30,7 +30,10 @@ export default function Layout() {
                 <button className="link-btn" onClick={async () => { await signOut(); navigate('/') }}>로그아웃</button>
               </>
             ) : (
-              <NavLink to="/login">로그인</NavLink>
+              <>
+                <NavLink to="/order/lookup" className="hide-sm">주문조회</NavLink>
+                <NavLink to="/login">로그인</NavLink>
+              </>
             )}
             <NavLink to="/cart" className="cart-link">
               장바구니{count > 0 && <span className="badge-count">{count}</span>}
