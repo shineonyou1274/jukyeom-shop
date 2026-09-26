@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useCart } from '../context/CartContext'
 import ProductImage from '../components/ProductImage'
 import { won } from '../lib/format'
+import { PRODUCT_SELECT, optionsOf, priceLabel } from '../lib/product'
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../config/store'
 
 export default function ProductDetail() {
@@ -13,16 +14,28 @@ export default function ProductDetail() {
   const [product, setProduct] = useState()
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  const [optionId, setOptionId] = useState(null)
 
   useEffect(() => {
-    supabase.from('products').select('*').eq('id', id).maybeSingle().then(({ data }) => setProduct(data))
+    supabase.from('products').select(PRODUCT_SELECT).eq('id', id).maybeSingle().then(({ data }) => {
+      setProduct(data)
+      // 재고 있는 첫 번째 용량을 기본 선택
+      const first = optionsOf(data).find((o) => o.stock > 0)
+      setOptionId(first?.id ?? null)
+    })
   }, [id])
 
   if (product === undefined) return <div className="container page"><p className="muted">불러오는 중…</p></div>
   if (!product) return <div className="container page"><p>상품을 찾을 수 없어요. <Link to="/products">목록으로</Link></p></div>
 
-  const soldOut = product.stock <= 0
-  const maxQty = Math.min(product.stock, 99)
+  const options = optionsOf(product)
+  const option = options.find((o) => o.id === optionId) || null
+  const unitPrice = option ? option.price : product.price
+  const stock = options.length ? (option?.stock ?? 0) : product.stock
+  const soldOut = options.length ? options.every((o) => o.stock <= 0) : product.stock <= 0
+  const canBuy = options.length ? Boolean(option && option.stock > 0) : !soldOut
+  const maxQty = Math.min(stock, 99)
+  const addToCart = () => cart.add(product, qty, option)
 
   return (
     <div className="container page">
@@ -32,7 +45,20 @@ export default function ProductDetail() {
           {product.badge && <span className="tag inline">{product.badge}</span>}
           <h1>{product.name}</h1>
           {product.subtitle && <p className="muted">{product.subtitle}</p>}
-          <p className="detail-price">{won(product.price)}</p>
+          <p className="detail-price">{option ? won(option.price) : priceLabel(product)}</p>
+
+          {options.length > 0 && (
+            <div className="option-list" role="radiogroup" aria-label="용량 선택">
+              {options.map((o) => (
+                <button key={o.id} type="button" role="radio" aria-checked={o.id === optionId}
+                  className={o.id === optionId ? 'on' : ''} disabled={o.stock <= 0}
+                  onClick={() => { setOptionId(o.id); setQty(1); setAdded(false) }}>
+                  <span>{o.label}</span>
+                  <b>{o.stock <= 0 ? '품절' : won(o.price)}</b>
+                </button>
+              ))}
+            </div>
+          )}
 
           <dl className="spec">
             <dt>배송비</dt>
@@ -40,23 +66,23 @@ export default function ProductDetail() {
             <dt>교환·환불</dt>
             <dd><Link to="/refund">교환·환불 정책 보기</Link></dd>
             <dt>재고</dt>
-            <dd>{soldOut ? '품절' : product.stock < 10 ? `${product.stock}개 남음` : '구매 가능'}</dd>
+            <dd>{!canBuy ? '품절' : stock < 10 ? `${stock}개 남음` : '구매 가능'}</dd>
           </dl>
 
-          {!soldOut && (
+          {canBuy && (
             <div className="qty-row">
-              <span>수량</span>
+              <span>수량{option && <small className="muted"> · {option.label}</small>}</span>
               <Qty value={qty} max={maxQty} onChange={setQty} />
-              <b>{won(product.price * qty)}</b>
+              <b>{won(unitPrice * qty)}</b>
             </div>
           )}
 
           <div className="detail-actions">
-            <button className="btn btn-ghost" disabled={soldOut} onClick={() => { cart.add(product, qty); setAdded(true) }}>
+            <button className="btn btn-ghost" disabled={!canBuy} onClick={() => { addToCart(); setAdded(true) }}>
               장바구니 담기
             </button>
-            <button className="btn btn-primary" disabled={soldOut} onClick={() => { cart.add(product, qty); navigate('/cart') }}>
-              {soldOut ? '품절' : '바로 구매'}
+            <button className="btn btn-primary" disabled={!canBuy} onClick={() => { addToCart(); navigate('/cart') }}>
+              {canBuy ? '바로 구매' : '품절'}
             </button>
           </div>
           {added && (

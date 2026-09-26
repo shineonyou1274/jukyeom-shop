@@ -25,23 +25,38 @@ export default postHandler(async (req, body) => {
   }
   const db = supabaseAdmin()
 
+  // 같은 상품·같은 옵션은 합친다. 용량 옵션이 있는 상품은 optionId가 꼭 필요하다
   const items = Array.isArray(body.items) ? body.items : []
   const merged = new Map()
   for (const it of items) {
-    const id = Number(it.productId)
+    const productId = Number(it.productId)
+    const optionId = it.optionId == null ? null : Number(it.optionId)
     const qty = Math.floor(Number(it.quantity))
-    if (!Number.isInteger(id) || !(qty > 0) || qty > 99) throw new HttpError(400, '주문 수량이 올바르지 않아요.')
-    merged.set(id, (merged.get(id) || 0) + qty)
+    if (!Number.isInteger(productId) || (optionId !== null && !Number.isInteger(optionId)) || !(qty > 0) || qty > 99) {
+      throw new HttpError(400, '주문 수량이 올바르지 않아요.')
+    }
+    const key = `${productId}:${optionId ?? ''}`
+    const prev = merged.get(key)
+    merged.set(key, { productId, optionId, quantity: (prev?.quantity || 0) + qty })
   }
   if (merged.size === 0) throw new HttpError(400, '장바구니가 비어 있어요.')
 
+  const wanted = [...merged.values()]
   const { data: products, error } = await db
-    .from('products').select('id, name, price, stock, is_active').in('id', [...merged.keys()])
+    .from('products').select('id, name, price, stock, is_active, product_options(id, label, price, stock, is_active)')
+    .in('id', [...new Set(wanted.map((w) => w.productId))])
   if (error) throw error
 
-  const lines = [...merged].map(([id, quantity]) => {
-    const p = products.find((x) => x.id === id)
+  const lines = wanted.map(({ productId, optionId, quantity }) => {
+    const p = products.find((x) => x.id === productId)
     if (!p || !p.is_active) throw new HttpError(400, '판매가 종료된 상품이 있어요. 장바구니를 확인해 주세요.')
+    const options = p.product_options || []
+    if (options.length > 0 || optionId !== null) {
+      const o = options.find((x) => x.id === optionId)
+      if (!o || !o.is_active) throw new HttpError(400, `'${p.name}'의 선택한 용량이 판매 종료됐어요. 장바구니를 확인해 주세요.`)
+      if (o.stock < quantity) throw new HttpError(400, `'${p.name} ${o.label}' 재고가 부족해요. (남은 수량 ${o.stock}개)`)
+      return { product_id: p.id, option_id: o.id, option_label: o.label, product_name: `${p.name} ${o.label}`, unit_price: o.price, quantity }
+    }
     if (p.stock < quantity) throw new HttpError(400, `'${p.name}' 재고가 부족해요. (남은 수량 ${p.stock}개)`)
     return { product_id: p.id, product_name: p.name, unit_price: p.price, quantity }
   })

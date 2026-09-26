@@ -6,6 +6,7 @@ import ProductImage from '../components/ProductImage'
 import { Qty } from './ProductDetail'
 import { won } from '../lib/format'
 import { FREE_SHIPPING_THRESHOLD } from '../config/store'
+import { PRODUCT_SELECT } from '../lib/product'
 
 export default function Cart() {
   const cart = useCart()
@@ -15,7 +16,7 @@ export default function Cart() {
   // 담아둔 사이 가격이 바뀌었거나 판매 종료된 상품 반영
   useEffect(() => {
     if (!ids) return
-    supabase.from('products').select('id, name, price, image_url').eq('is_active', true)
+    supabase.from('products').select(PRODUCT_SELECT).eq('is_active', true)
       .in('id', ids.split(',').map(Number))
       .then(({ data }) => data && cart.sync(data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,16 +40,17 @@ export default function Cart() {
       <div className="checkout-grid">
         <ul className="cart-list">
           {cart.items.map((item) => (
-            <li key={item.id} className="cart-item">
+            <li key={item.key} className="cart-item">
               <Link to={`/products/${item.id}`} className="thumb"><ProductImage product={item} /></Link>
               <div className="cart-item-info">
                 <Link to={`/products/${item.id}`}><b>{item.name}</b></Link>
+                {item.optionLabel && <span className="small">{item.optionLabel}</span>}
                 <span className="muted">{won(item.price)}</span>
-                <Qty value={item.quantity} onChange={(q) => cart.setQuantity(item.id, q)} />
+                <Qty value={item.quantity} onChange={(q) => cart.setQuantity(item.key, q)} />
               </div>
               <div className="cart-item-side">
                 <b>{won(item.price * item.quantity)}</b>
-                <button className="link-btn muted" onClick={() => cart.remove(item.id)}>삭제</button>
+                <button className="link-btn muted" onClick={() => cart.remove(item.key)}>삭제</button>
               </div>
             </li>
           ))}

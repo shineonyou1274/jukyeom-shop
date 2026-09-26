@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 import ProductImage from './ProductImage'
-import { won } from '../lib/format'
+import { priceLabel, stockOf } from '../lib/product'
 
 export default function ProductCard({ product }) {
-  const soldOut = product.stock <= 0
+  const soldOut = stockOf(product) <= 0
   return (
     <Link to={`/products/${product.id}`} className="card">
       <div className="card-media">
@@ -14,7 +14,7 @@ export default function ProductCard({ product }) {
       <div className="card-body">
         <h3>{product.name}</h3>
         {product.subtitle && <p className="muted">{product.subtitle}</p>}
-        <p className="price">{won(product.price)}</p>
+        <p className="price">{priceLabel(product)}</p>
       </div>
     </Link>
   )

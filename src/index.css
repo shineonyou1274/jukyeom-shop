@@ -287,3 +287,14 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .ship-notes { padding-left: 18px; color: var(--ink-2); font-size: .93rem; }
 .ship-notes a { text-decoration: underline; }
 @media (max-width: 520px) { .info-table th { width: 38%; } }
+
+.option-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin: 4px 0 18px; }
+.option-list button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); background: #fff; border-radius: 3px; cursor: pointer; text-align: left; }
+.option-list button span { font-size: .9rem; color: var(--ink-2); }
+.option-list button.on { border: 2px solid var(--ink); padding: 9px 11px; }
+.option-list button.on span { color: var(--ink); font-weight: 700; }
+.option-list button:disabled { opacity: .45; cursor: not-allowed; }
+.options-editor { border: 1px solid var(--line); border-radius: 6px; padding: 12px; margin-bottom: 12px; background: #fff; }
+.options-editor .opt-row { display: grid; grid-template-columns: 1.3fr 1fr .8fr auto; gap: 6px; margin-bottom: 6px; align-items: center; }
+.options-editor .opt-row input { padding: 8px 10px; font-size: .92rem; }
+.options-editor .opt-head { font-size: .8rem; color: var(--ink-3); }

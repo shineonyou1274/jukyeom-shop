@@ -130,7 +130,7 @@ function CheckoutForm() {
       }
       // 서버에서 DB 가격으로 주문서를 만들고, 그 금액으로 결제
       const order = await callApi('orders', {
-        items: cart.items.map((i) => ({ productId: i.id, quantity: i.quantity })),
+        items: cart.items.map((i) => ({ productId: i.id, optionId: i.optionId ?? null, quantity: i.quantity })),
         shipping: form,
         paymentType: method,
         depositorName: depositor || form.name,
@@ -212,7 +212,7 @@ function CheckoutForm() {
             <h2>주문 상품</h2>
             <ul className="mini-list">
               {cart.items.map((i) => (
-                <li key={i.id}><span>{i.name} × {i.quantity}</span><b>{won(i.price * i.quantity)}</b></li>
+                <li key={i.key}><span>{i.name}{i.optionLabel && ` ${i.optionLabel}`} × {i.quantity}</span><b>{won(i.price * i.quantity)}</b></li>
               ))}
             </ul>
             <Link to="/cart" className="more">장바구니 수정</Link>

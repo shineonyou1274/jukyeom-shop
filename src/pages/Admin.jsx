@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { callApi } from '../lib/api'
 import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
 import ProductImage from '../components/ProductImage'
+import { PRODUCT_SELECT, priceLabel, stockOf } from '../lib/product'
 
 export default function Admin() {
   const [tab, setTab] = useState('orders')
@@ -163,7 +164,7 @@ function AdminProducts() {
   const [editing, setEditing] = useState(null)
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('products').select('*').order('sort_order').order('id')
+    const { data } = await supabase.from('products').select(PRODUCT_SELECT).order('sort_order').order('id')
     setProducts(data || [])
   }, [])
   useEffect(() => { load() }, [load])
@@ -182,7 +183,10 @@ function AdminProducts() {
               <div className="thumb"><ProductImage product={p} /></div>
               <div className="grow">
                 <b>{p.name}</b> {!p.is_active && <span className="status s-cancelled">숨김</span>}
-                <div className="small muted">{won(p.price)} · 재고 {p.stock}개</div>
+                <div className="small muted">
+                  {priceLabel(p)} · 재고 {stockOf(p)}개
+                  {p.product_options?.length > 0 && ` · 용량 ${p.product_options.length}종`}
+                </div>
               </div>
               <button className="btn btn-ghost sm" onClick={() => setEditing(p)}>수정</button>
             </li>
@@ -195,6 +199,11 @@ function AdminProducts() {
 
 function ProductForm({ initial, onDone }) {
   const [form, setForm] = useState({ ...initial })
+  // 용량 옵션: 있으면 옵션별 가격·재고로 판매하고, 상품 가격·재고는 자동 계산
+  const [opts, setOpts] = useState(() =>
+    [...(initial.product_options || [])].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+      .map(({ id, label, price, stock }) => ({ id, label, price, stock })))
+  const setOpt = (i, k, v) => setOpts(opts.map((o, j) => (j === i ? { ...o, [k]: v } : o)))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
@@ -228,16 +237,41 @@ function ProductForm({ initial, onDone }) {
       is_active: form.is_active,
       sort_order: Number(form.sort_order) || 0,
     }
+    const cleanOpts = opts
+      .map((o, i) => ({ id: o.id, label: String(o.label).trim(), price: Number(o.price), stock: Number(o.stock), sort_order: i }))
+      .filter((o) => o.label || o.price)
+    if (cleanOpts.some((o) => !o.label || !(o.price > 0) || !(o.stock >= 0))) return setError('용량 옵션의 이름·가격·재고를 모두 입력해 주세요.')
+    if (cleanOpts.length) {
+      row.price = Math.min(...cleanOpts.map((o) => o.price))
+      row.stock = cleanOpts.reduce((s, o) => s + o.stock, 0)
+    }
     if (!row.name) return setError('상품명을 입력해 주세요.')
     if (!(row.price > 0)) return setError('가격을 입력해 주세요.')
     if (!(row.stock >= 0)) return setError('재고를 입력해 주세요.')
     setBusy(true)
-    const { error } = initial.id
-      ? await supabase.from('products').update(row).eq('id', initial.id)
-      : await supabase.from('products').insert(row)
-    setBusy(false)
-    if (error) return setError(error.message)
-    onDone()
+    try {
+      const { data: saved, error } = initial.id
+        ? await supabase.from('products').update(row).eq('id', initial.id).select('id').single()
+        : await supabase.from('products').insert(row).select('id').single()
+      if (error) throw error
+      const keep = cleanOpts.filter((o) => o.id).map((o) => o.id)
+      const removed = (initial.product_options || []).map((o) => o.id).filter((id) => !keep.includes(id))
+      if (removed.length) {
+        const { error: e1 } = await supabase.from('product_options').delete().in('id', removed)
+        if (e1) throw e1
+      }
+      for (const { id, ...o } of cleanOpts) {
+        const { error: e2 } = id
+          ? await supabase.from('product_options').update(o).eq('id', id)
+          : await supabase.from('product_options').insert({ ...o, product_id: saved.id })
+        if (e2) throw e2
+      }
+      onDone()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -255,10 +289,27 @@ function ProductForm({ initial, onDone }) {
         <div>
           <label>상품명<input value={form.name} onChange={set('name')} required /></label>
           <label>한 줄 설명 (용량 등)<input value={form.subtitle || ''} onChange={set('subtitle')} placeholder="예) 250g · 아홉 번 구운 자죽염" /></label>
-          <div className="form-row two">
-            <label>가격 (원)<input type="number" min="100" value={form.price} onChange={set('price')} required /></label>
-            <label>재고 (개)<input type="number" min="0" value={form.stock} onChange={set('stock')} required /></label>
+          <div className="options-editor">
+            <b className="small">용량 옵션</b> <span className="small muted">(용량별로 가격이 다르면 추가하세요. 없으면 아래 가격·재고로 판매)</span>
+            {opts.length > 0 && (
+              <div className="opt-row opt-head"><span>용량</span><span>가격(원)</span><span>재고</span><span /></div>
+            )}
+            {opts.map((o, i) => (
+              <div key={o.id ?? `new-${i}`} className="opt-row">
+                <input value={o.label} onChange={(e) => setOpt(i, 'label', e.target.value)} placeholder="예) 250g" />
+                <input type="number" min="100" value={o.price} onChange={(e) => setOpt(i, 'price', e.target.value)} />
+                <input type="number" min="0" value={o.stock} onChange={(e) => setOpt(i, 'stock', e.target.value)} />
+                <button type="button" className="link-btn muted small" onClick={() => setOpts(opts.filter((_, j) => j !== i))}>삭제</button>
+              </div>
+            ))}
+            <button type="button" className="btn btn-ghost sm" onClick={() => setOpts([...opts, { label: '', price: '', stock: 0 }])}>+ 용량 추가</button>
           </div>
+          {opts.length === 0 && (
+            <div className="form-row two">
+              <label>가격 (원)<input type="number" min="100" value={form.price} onChange={set('price')} required /></label>
+              <label>재고 (개)<input type="number" min="0" value={form.stock} onChange={set('stock')} required /></label>
+            </div>
+          )}
           <div className="form-row two">
             <label>뱃지<input value={form.badge || ''} onChange={set('badge')} placeholder="예) 대표상품" /></label>
             <label>진열 순서<input type="number" value={form.sort_order} onChange={set('sort_order')} /></label>

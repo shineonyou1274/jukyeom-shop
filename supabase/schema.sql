@@ -189,3 +189,80 @@ create policy "product_images_admin_update" on storage.objects for update
 drop policy if exists "product_images_admin_delete" on storage.objects;
 create policy "product_images_admin_delete" on storage.objects for delete
   using (bucket_id = 'product-images' and public.is_admin());
+
+-- 6) 용량 옵션 ---------------------------------------------------
+-- 옵션이 있는 상품은 옵션별 가격·재고로 판매한다 (상품의 price/stock은 최저가·합계로 자동 계산)
+create table if not exists public.product_options (
+  id          bigint generated always as identity primary key,
+  product_id  bigint not null references public.products(id) on delete cascade,
+  label       text not null,
+  price       integer not null check (price > 0),
+  stock       integer not null default 0 check (stock >= 0),
+  sort_order  integer not null default 0,
+  is_active   boolean not null default true
+);
+create index if not exists product_options_product_idx on public.product_options(product_id, sort_order);
+alter table public.product_options enable row level security;
+
+drop policy if exists "product_options_select" on public.product_options;
+create policy "product_options_select" on public.product_options for select
+  using ((is_active and exists (select 1 from public.products p where p.id = product_id and p.is_active)) or public.is_admin());
+drop policy if exists "product_options_admin_write" on public.product_options;
+create policy "product_options_admin_write" on public.product_options for all
+  using (public.is_admin()) with check (public.is_admin());
+
+alter table public.order_items add column if not exists option_id bigint references public.product_options(id) on delete set null;
+alter table public.order_items add column if not exists option_label text;
+
+-- 비회원 주문
+alter table public.orders alter column user_id drop not null;
+alter table public.orders add column if not exists orderer_name text;
+alter table public.orders add column if not exists orderer_phone text;
+alter table public.orders add column if not exists orderer_email text;
+create index if not exists orders_guest_lookup_idx on public.orders(order_no, orderer_phone);
+
+-- 결제 완료/취소 시 재고: 옵션이 있으면 옵션 재고, 없으면 상품 재고
+create or replace function public.mark_order_paid(
+  p_order_id uuid, p_payment_key text, p_method text, p_receipt_url text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.orders
+     set status = 'paid', payment_key = coalesce(p_payment_key, payment_key),
+         payment_method = coalesce(p_method, payment_method),
+         receipt_url = coalesce(p_receipt_url, receipt_url), paid_at = now()
+   where id = p_order_id and status in ('pending','awaiting_deposit');
+  if not found then return; end if;
+
+  update public.product_options o
+     set stock = greatest(o.stock - oi.quantity, 0)
+    from public.order_items oi
+   where oi.order_id = p_order_id and oi.option_id = o.id;
+  update public.products p
+     set stock = greatest(p.stock - oi.quantity, 0)
+    from public.order_items oi
+   where oi.order_id = p_order_id and oi.option_id is null and oi.product_id = p.id;
+end $$;
+
+create or replace function public.mark_order_cancelled(p_order_id uuid, p_reason text)
+returns void language plpgsql security definer set search_path = public as $$
+declare prev text;
+begin
+  select status into prev from public.orders where id = p_order_id for update;
+  if prev is null or prev not in ('awaiting_deposit','paid','preparing') then return; end if;
+
+  update public.orders set status = 'cancelled', cancel_reason = p_reason where id = p_order_id;
+
+  if prev in ('paid','preparing') then
+    update public.product_options o
+       set stock = o.stock + oi.quantity
+      from public.order_items oi
+     where oi.order_id = p_order_id and oi.option_id = o.id;
+    update public.products p
+       set stock = p.stock + oi.quantity
+      from public.order_items oi
+     where oi.order_id = p_order_id and oi.option_id is null and oi.product_id = p.id;
+  end if;
+end $$;
+
+revoke execute on function public.mark_order_paid(uuid, text, text, text) from public, anon, authenticated;
+revoke execute on function public.mark_order_cancelled(uuid, text) from public, anon, authenticated;
