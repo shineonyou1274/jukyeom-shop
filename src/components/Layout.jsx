@@ -52,7 +52,7 @@ export default function Layout() {
           <p>
             상호 {STORE.name} · 대표 {STORE.owner} · 사업자등록번호 {STORE.bizNo} · 통신판매업신고 {STORE.mailOrderNo}
             <br />
-            주소 {STORE.address} · 고객센터 {STORE.phone} ({STORE.csHours}) · {STORE.email}
+            주소 {STORE.address} · 고객센터 {STORE.phone}{STORE.mobile && ` / ${STORE.mobile}`} ({STORE.csHours}) · {STORE.email}
             <br />
             개인정보 보호책임자 {STORE.privacyOfficer}
           </p>
