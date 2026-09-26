@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 가게 위치 지도: 네이버 지도 키(VITE_NAVER_MAP_KEY)가 있으면 네이버 지도, 없거나 실패하면 구글 지도
-const NAVER_KEY = import.meta.env.VITE_NAVER_MAP_KEY
+// 네이버 클라우드 Maps Client ID (공개돼도 되는 값, 허용 도메인은 네이버 클라우드 콘솔에서 관리)
+const NAVER_KEY = import.meta.env.VITE_NAVER_MAP_KEY || 'akw26j568d'
 
 let naverLoading
 function loadNaver() {
