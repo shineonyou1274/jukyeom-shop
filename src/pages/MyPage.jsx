@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
 import { STORE } from '../config/store'
+import DepositInfo from '../components/DepositInfo'
 
 export default function MyPage() {
   const { user, profile, refreshProfile } = useAuth()
@@ -60,13 +61,14 @@ function OrderCard({ order }) {
           <li key={it.id}><span>{it.product_name} × {it.quantity}</span><span>{won(it.unit_price * it.quantity)}</span></li>
         ))}
       </ul>
+      {order.status === 'awaiting_deposit' && <DepositInfo order={order} />}
       <p className="small muted">
         {order.receiver_name} · {order.address1} {order.address2}
         {order.tracking_no && <> · 송장번호 <b>{order.tracking_no}</b></>}
       </p>
       <div className="order-foot small">
         {order.receipt_url && <a href={order.receipt_url} target="_blank" rel="noreferrer">영수증 보기</a>}
-        {['paid', 'preparing'].includes(order.status) && (
+        {['awaiting_deposit', 'paid', 'preparing'].includes(order.status) && (
           <span className="muted">취소를 원하시면 고객센터({STORE.phone})로 연락 주세요.</span>
         )}
       </div>

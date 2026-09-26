@@ -37,6 +37,8 @@ export default function ProductDetail() {
           <dl className="spec">
             <dt>배송비</dt>
             <dd>{won(SHIPPING_FEE)} ({won(FREE_SHIPPING_THRESHOLD)} 이상 무료)</dd>
+            <dt>교환·환불</dt>
+            <dd><Link to="/refund">교환·환불 정책 보기</Link></dd>
             <dt>재고</dt>
             <dd>{soldOut ? '품절' : product.stock < 10 ? `${product.stock}개 남음` : '구매 가능'}</dd>
           </dl>

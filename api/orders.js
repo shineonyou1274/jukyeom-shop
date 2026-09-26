@@ -1,4 +1,5 @@
 import { FREE_SHIPPING_THRESHOLD, HttpError, SHIPPING_FEE, postHandler, requireUser, supabaseAdmin } from './_lib.js'
+import { BANK } from '../src/config/store.js'
 
 function makeOrderNo() {
   const d = new Date(Date.now() + 9 * 3600 * 1000) // KST
@@ -44,6 +45,11 @@ export default postHandler(async (req, body) => {
   const totalAmount = itemsAmount + shippingFee
   const orderName = lines.length > 1 ? `${lines[0].product_name} 외 ${lines.length - 1}건` : lines[0].product_name
 
+  // card = 토스 결제위젯(카드·간편결제·가상계좌), bank = 가게 계좌로 직접 입금
+  const bank = body.paymentType === 'bank'
+  if (bank && !BANK.account) throw new HttpError(400, '무통장입금은 아직 준비 중이에요.')
+  const depositorName = bank ? required(body.depositorName, '입금자명').slice(0, 30) : null
+
   const s = body.shipping || {}
   const { data: order, error: orderErr } = await db.from('orders').insert({
     order_no: makeOrderNo(),
@@ -58,6 +64,8 @@ export default postHandler(async (req, body) => {
     address1: required(s.address1, '주소'),
     address2: String(s.address2 ?? '').trim(),
     memo: String(s.memo ?? '').trim().slice(0, 200),
+    payment_type: bank ? 'bank' : 'card',
+    ...(bank && { status: 'awaiting_deposit', payment_method: '무통장입금', depositor_name: depositorName }),
   }).select('id, order_no').single()
   if (orderErr) throw orderErr
 

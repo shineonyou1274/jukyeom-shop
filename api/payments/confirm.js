@@ -1,4 +1,5 @@
 import { HttpError, postHandler, requireUser, supabaseAdmin, tossAuthHeader } from '../_lib.js'
+import { bankName } from '../_banks.js'
 
 // 토스 결제창에서 돌아온 뒤 호출: 금액을 검증하고 토스에 최종 승인을 요청한다
 export default postHandler(async (req, body) => {
@@ -27,14 +28,34 @@ export default postHandler(async (req, body) => {
     throw new HttpError(400, payment.message || '결제 승인에 실패했어요.')
   }
 
-  const { error } = await db.rpc('mark_order_paid', {
-    p_order_id: order.id,
-    p_payment_key: payment.paymentKey,
-    p_method: payment.method + (payment.card?.company ? ` (${payment.card.company})` : ''),
-    p_receipt_url: payment.receipt?.url ?? null,
-  })
-  if (error) throw error
+  if (payment.status === 'WAITING_FOR_DEPOSIT') {
+    // 가상계좌: 아직 돈이 들어온 게 아니다. 입금되면 웹훅(/api/payments/webhook)이 결제 완료로 바꾼다
+    const va = payment.virtualAccount || {}
+    const { error } = await db.from('orders').update({
+      status: 'awaiting_deposit',
+      payment_key: payment.paymentKey,
+      payment_method: '가상계좌',
+      receipt_url: payment.receipt?.url ?? null,
+      deposit_info: {
+        bank: bankName(va.bankCode),
+        accountNumber: va.accountNumber,
+        holder: va.customerName,
+        dueDate: va.dueDate,
+      },
+    }).eq('id', order.id).eq('status', 'pending')
+    if (error) throw error
+  } else if (payment.status === 'DONE') {
+    const { error } = await db.rpc('mark_order_paid', {
+      p_order_id: order.id,
+      p_payment_key: payment.paymentKey,
+      p_method: payment.method + (payment.card?.company ? ` (${payment.card.company})` : payment.easyPay?.provider ? ` (${payment.easyPay.provider})` : ''),
+      p_receipt_url: payment.receipt?.url ?? null,
+    })
+    if (error) throw error
+  } else {
+    throw new HttpError(400, `결제가 완료되지 않았어요. (${payment.status})`)
+  }
 
-  const { data: paid } = await db.from('orders').select('*').eq('id', order.id).single()
-  return { order: paid }
+  const { data: updated } = await db.from('orders').select('*').eq('id', order.id).single()
+  return { order: updated }
 })

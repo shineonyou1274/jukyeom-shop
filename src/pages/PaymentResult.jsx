@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import DepositInfo from '../components/DepositInfo'
 import { callApi } from '../lib/api'
 import { useCart } from '../context/CartContext'
 import { won } from '../lib/format'
@@ -35,11 +37,29 @@ export function PaymentSuccess() {
   }
   if (!order) return <div className="container page narrow center"><p className="muted">결제를 확인하고 있어요…</p></div>
 
+  return <OrderDone order={order} />
+}
+
+// 무통장입금 주문 직후 화면
+export function OrderComplete() {
+  const { orderNo } = useParams()
+  const [order, setOrder] = useState()
+  useEffect(() => {
+    supabase.from('orders').select('*').eq('order_no', orderNo).maybeSingle().then(({ data }) => setOrder(data))
+  }, [orderNo])
+  if (order === undefined) return <div className="container page narrow center"><p className="muted">불러오는 중…</p></div>
+  if (!order) return <div className="container page narrow center"><p>주문을 찾을 수 없어요. <Link to="/mypage">주문 내역</Link></p></div>
+  return <OrderDone order={order} />
+}
+
+function OrderDone({ order }) {
+  const waiting = order.status === 'awaiting_deposit'
   return (
     <div className="container page narrow center">
       <div className="done-mark">✓</div>
-      <h1>주문이 완료됐어요</h1>
-      <p className="muted">정성껏 준비해서 보내드릴게요.</p>
+      <h1>{waiting ? '주문이 접수됐어요' : '주문이 완료됐어요'}</h1>
+      <p className="muted">{waiting ? '아래 계좌로 입금해 주시면 정성껏 준비해서 보내드릴게요.' : '정성껏 준비해서 보내드릴게요.'}</p>
+      {waiting && <DepositInfo order={order} />}
       <dl className="summary-list left">
         <dt>주문번호</dt><dd>{order.order_no}</dd>
         <dt>상품</dt><dd>{order.order_name}</dd>

@@ -8,11 +8,11 @@ import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
-import { PaymentFail, PaymentSuccess } from './pages/PaymentResult'
+import { OrderComplete, PaymentFail, PaymentSuccess } from './pages/PaymentResult'
 import { Login, ResetPassword, Signup } from './pages/Auth'
 import MyPage from './pages/MyPage'
 import Admin from './pages/Admin'
-import { Privacy, Terms } from './pages/Policy'
+import { Privacy, Refund, Terms } from './pages/Policy'
 
 export default function App() {
   return (
@@ -20,6 +20,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="terms" element={<Terms />} />
         <Route path="privacy" element={<Privacy />} />
+        <Route path="refund" element={<Refund />} />
         {!isConfigured ? (
           <Route path="*" element={<SetupNotice />} />
         ) : (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
             <Route path="payment/success" element={<RequireAuth><PaymentSuccess /></RequireAuth>} />
             <Route path="payment/fail" element={<PaymentFail />} />
+            <Route path="order/complete/:orderNo" element={<RequireAuth><OrderComplete /></RequireAuth>} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
             <Route path="reset-password" element={<ResetPassword />} />

@@ -66,7 +66,10 @@ create table if not exists public.orders (
   shipping_fee    integer not null default 0,
   total_amount    integer not null,
   status          text not null default 'pending'
-                  check (status in ('pending','paid','preparing','shipped','delivered','cancelled','failed')),
+                  check (status in ('pending','awaiting_deposit','paid','preparing','shipped','delivered','cancelled','failed')),
+  payment_type    text not null default 'card' check (payment_type in ('card','bank')), -- card=토스, bank=무통장입금
+  depositor_name  text,                          -- 무통장입금 입금자명
+  deposit_info    jsonb,                         -- 가상계좌 정보 (은행, 계좌번호, 입금기한)
   receiver_name   text not null,
   receiver_phone  text not null,
   zipcode         text not null,
@@ -93,15 +96,16 @@ create table if not exists public.order_items (
 );
 create index if not exists order_items_order_idx on public.order_items(order_id);
 
--- 결제 승인 시: 상태 변경 + 재고 차감을 한 번에 (서버에서만 호출)
+-- 결제 완료 시(카드 승인 / 입금 확인): 상태 변경 + 재고 차감 (서버에서만 호출)
 create or replace function public.mark_order_paid(
   p_order_id uuid, p_payment_key text, p_method text, p_receipt_url text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   update public.orders
-     set status = 'paid', payment_key = p_payment_key, payment_method = p_method,
-         receipt_url = p_receipt_url, paid_at = now()
-   where id = p_order_id and status = 'pending';
+     set status = 'paid', payment_key = coalesce(p_payment_key, payment_key),
+         payment_method = coalesce(p_method, payment_method),
+         receipt_url = coalesce(p_receipt_url, receipt_url), paid_at = now()
+   where id = p_order_id and status in ('pending','awaiting_deposit');
   if not found then return; end if;
 
   update public.products p
@@ -110,18 +114,23 @@ begin
    where oi.order_id = p_order_id and oi.product_id = p.id;
 end $$;
 
--- 결제 취소 시: 상태 변경 + 재고 복구 (서버에서만 호출)
+-- 주문 취소: 상태 변경 + (결제 완료였다면) 재고 복구 (서버에서만 호출)
 create or replace function public.mark_order_cancelled(p_order_id uuid, p_reason text)
 returns void language plpgsql security definer set search_path = public as $$
+declare prev text;
 begin
-  update public.orders set status = 'cancelled', cancel_reason = p_reason
-   where id = p_order_id and status in ('paid','preparing');
-  if not found then return; end if;
+  select status into prev from public.orders where id = p_order_id for update;
+  if prev is null or prev not in ('awaiting_deposit','paid','preparing') then return; end if;
 
-  update public.products p
-     set stock = p.stock + oi.quantity
-    from public.order_items oi
-   where oi.order_id = p_order_id and oi.product_id = p.id;
+  update public.orders set status = 'cancelled', cancel_reason = p_reason where id = p_order_id;
+
+  -- 재고는 결제 완료 시점에 차감되므로, 입금 대기 주문은 복구할 재고가 없다
+  if prev in ('paid','preparing') then
+    update public.products p
+       set stock = p.stock + oi.quantity
+      from public.order_items oi
+     where oi.order_id = p_order_id and oi.product_id = p.id;
+  end if;
 end $$;
 
 revoke execute on function public.mark_order_paid(uuid, text, text, text) from public, anon, authenticated;

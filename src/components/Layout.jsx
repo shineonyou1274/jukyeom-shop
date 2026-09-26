@@ -48,6 +48,7 @@ export default function Layout() {
           <div className="footer-links">
             <Link to="/terms">이용약관</Link>
             <Link to="/privacy"><b>개인정보처리방침</b></Link>
+            <Link to="/refund">교환·환불 정책</Link>
           </div>
           <p>
             상호 {STORE.name} · 대표 {STORE.owner} · 사업자등록번호 {STORE.bizNo} · 통신판매업신고 {STORE.mailOrderNo}

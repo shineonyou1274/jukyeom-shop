@@ -13,7 +13,14 @@ export const STORE = {
   email: '1274salt@gmail.com',
   privacyOfficer: '박상엽',             // 개인정보 보호책임자
   csHours: '평일 09:00 ~ 18:00 (주말·공휴일 휴무)',
-  bankInfo: '',                        // 필요하면 무통장 입금 계좌
+}
+
+// 무통장입금 계좌: account를 비워 두면 결제 화면에 무통장입금이 나타나지 않아요.
+export const BANK = {
+  bank: '',        // 예) '농협은행'
+  account: '',     // 예) '000-0000-0000-00'
+  holder: '',      // 예금주
+  dueDays: 3,      // 입금 기한 (주문일로부터 며칠)
 }
 
 export const SHIPPING_FEE = 3000

@@ -259,3 +259,17 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .footer-links { display: flex; gap: 16px; margin-bottom: 12px; color: #e8e2d4; }
 .footer p { margin: 0 0 8px; line-height: 1.8; }
 .copyright { color: #7d786c; }
+
+/* 결제 수단 · 입금 안내 */
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.pay-methods button { height: 48px; border: 1px solid var(--line); background: #fff; border-radius: 3px; cursor: pointer; font-weight: 500; }
+.pay-methods button.on { border: 2px solid var(--ink); font-weight: 700; }
+.bank-form { background: var(--paper); border-radius: 6px; padding: 14px 16px 4px; }
+.bank-form p { margin: 0 0 12px; line-height: 1.8; }
+.deposit-box { text-align: left; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--seal); border-radius: 4px; padding: 14px 16px; margin: 16px auto; max-width: 460px; }
+.deposit-box dl { display: grid; grid-template-columns: 72px 1fr; gap: 6px 12px; margin: 0 0 8px; font-size: .93rem; }
+.deposit-box dt { color: var(--ink-2); }
+.deposit-box dd { margin: 0; }
+.deposit-box p { margin: 0; }
+.s-awaiting_deposit { background: #f6e8d6; color: #8a5320; }
+.spec dd a, .hint a { text-decoration: underline; }

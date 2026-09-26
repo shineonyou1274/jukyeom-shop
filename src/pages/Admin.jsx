@@ -21,10 +21,11 @@ export default function Admin() {
 // ───────────────────────── 주문 관리 ─────────────────────────
 const FILTERS = [
   ['todo', '처리할 주문', ['paid', 'preparing']],
+  ['deposit', '입금 대기', ['awaiting_deposit']],
   ['shipped', '배송중', ['shipped']],
   ['delivered', '배송 완료', ['delivered']],
   ['cancelled', '취소', ['cancelled']],
-  ['all', '전체', ['paid', 'preparing', 'shipped', 'delivered', 'cancelled']],
+  ['all', '전체', ['awaiting_deposit', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled']],
 ]
 
 function AdminOrders() {
@@ -75,11 +76,25 @@ function AdminOrderCard({ order, onChange }) {
   }
 
   async function cancel() {
-    const reason = prompt('취소 사유를 입력해 주세요. (고객에게 전액 환불돼요)', '고객 요청')
+    const reason = prompt(order.status === 'awaiting_deposit' ? '취소 사유를 입력해 주세요.' : '취소 사유를 입력해 주세요. (고객에게 전액 환불돼요)', '고객 요청')
     if (reason === null) return
     setBusy(true)
     try {
-      await callApi('payments/cancel', { orderId: order.id, reason })
+      const { notice } = await callApi('payments/cancel', { orderId: order.id, reason })
+      if (notice) alert(notice)
+      onChange()
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function confirmDeposit() {
+    if (!confirm(`${order.depositor_name} 님의 ${won(order.total_amount)} 입금을 확인하셨나요?`)) return
+    setBusy(true)
+    try {
+      await callApi('deposits/confirm', { orderId: order.id })
       onChange()
     } catch (e) {
       alert(e.message)
@@ -106,10 +121,16 @@ function AdminOrderCard({ order, onChange }) {
         <b>{order.receiver_name}</b> · {order.receiver_phone}
         <br />({order.zipcode}) {order.address1} {order.address2}
         {order.memo && <><br />메모: {order.memo}</>}
-        <br /><span className="muted">결제: {order.payment_method}</span>
+        <br /><span className="muted">결제: {order.payment_method}{order.depositor_name && ` · 입금자명 ${order.depositor_name}`}</span>
+        {order.status === 'awaiting_deposit' && order.deposit_info && (
+          <><br /><span className="muted">가상계좌 {order.deposit_info.bank} {order.deposit_info.accountNumber} (입금되면 자동 확인)</span></>
+        )}
         {order.cancel_reason && <><br /><span className="muted">취소 사유: {order.cancel_reason}</span></>}
       </div>
       <div className="admin-actions">
+        {order.status === 'awaiting_deposit' && order.payment_type === 'bank' && (
+          <button className="btn btn-primary sm" disabled={busy} onClick={confirmDeposit}>입금 확인</button>
+        )}
         {order.status === 'paid' && (
           <button className="btn btn-ghost sm" disabled={busy} onClick={() => update({ status: 'preparing' })}>상품 준비 시작</button>
         )}
@@ -125,8 +146,8 @@ function AdminOrderCard({ order, onChange }) {
         {order.status === 'shipped' && (
           <button className="btn btn-ghost sm" disabled={busy} onClick={() => update({ status: 'delivered' })}>배송 완료</button>
         )}
-        {['paid', 'preparing'].includes(order.status) && (
-          <button className="btn btn-danger sm" disabled={busy} onClick={cancel}>주문 취소·환불</button>
+        {['awaiting_deposit', 'paid', 'preparing'].includes(order.status) && (
+          <button className="btn btn-danger sm" disabled={busy} onClick={cancel}>{order.status === 'awaiting_deposit' ? '주문 취소' : '주문 취소·환불'}</button>
         )}
       </div>
     </li>
