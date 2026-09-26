@@ -1,4 +1,5 @@
 import { sendJson, readJson, supabaseAdmin, tossAuthHeader } from '../_lib.js'
+import { notifyOrder } from '../_notify.js'
 
 // 토스페이먼츠 웹훅: 가상계좌 입금·취소 등 결제 상태가 바뀌면 호출된다.
 // 보낸 내용을 그대로 믿지 않고, 토스 API로 결제 상태를 다시 조회해서 반영한다.
@@ -23,6 +24,8 @@ export default async function handler(req, res) {
       await db.rpc('mark_order_paid', {
         p_order_id: order.id, p_payment_key: payment.paymentKey, p_method: null, p_receipt_url: null,
       })
+      // 가상계좌 입금처럼 이번에 처음 결제 완료가 된 경우에만 알린다
+      if (order.status === 'awaiting_deposit') await notifyOrder(order.id, 'deposited')
     } else if (['CANCELED', 'ABORTED', 'EXPIRED'].includes(payment.status)) {
       const reason = payment.status === 'EXPIRED' ? '입금 기한 만료' : payment.cancels?.at(-1)?.cancelReason || '결제 취소'
       await db.rpc('mark_order_cancelled', { p_order_id: order.id, p_reason: reason })

@@ -26,3 +26,6 @@ export const BANK = {
 
 export const SHIPPING_FEE = 4000       // 기본 택배비 (도서·산간은 추가 요금 별도 안내)
 export const FREE_SHIPPING_THRESHOLD = 50000
+
+// 관리자 주문 알림(웹 푸시) 공개 키. 짝이 되는 비밀 키는 Supabase app_secrets 테이블에만 있다
+export const PUSH_PUBLIC_KEY = 'BPsT3VL1B96XNyzRWpDsWnv9u1k4yoZwX8LkzHgBRrq8vlc9JUw3tPP1TpQuY6NyQrkCas4VYjcgTa2kov12Zoo'

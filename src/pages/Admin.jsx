@@ -5,6 +5,7 @@ import { callApi } from '../lib/api'
 import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
 import ProductImage from '../components/ProductImage'
 import { Stars } from '../components/Reviews'
+import OrderAlerts from '../components/OrderAlerts'
 import { PRODUCT_SELECT, priceLabel, stockOf } from '../lib/product'
 
 export default function Admin() {
@@ -13,6 +14,7 @@ export default function Admin() {
   return (
     <div className="container page">
       <h1>관리자</h1>
+      <OrderAlerts />
       <div className="tabs">
         <button className={tab === 'orders' ? 'on' : ''} onClick={() => setTab('orders')}>주문 관리</button>
         <button className={tab === 'products' ? 'on' : ''} onClick={() => setTab('products')}>상품 관리</button>

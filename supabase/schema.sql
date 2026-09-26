@@ -344,3 +344,23 @@ create policy "review_images_insert" on storage.objects for insert
 drop policy if exists "review_images_delete" on storage.objects;
 create policy "review_images_delete" on storage.objects for delete
   using (bucket_id = 'review-images' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+
+-- 관리자 휴대폰 주문 알림(웹 푸시) 구독 정보. 서버(service role)만 읽고 쓴다
+create table if not exists public.push_subscriptions (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.push_subscriptions enable row level security;
+revoke all on public.push_subscriptions from anon, authenticated;
+
+-- 서버에서만 쓰는 설정값. 푸시 서명 키(vapid_public, vapid_private)를 여기에 넣는다
+create table if not exists public.app_secrets (
+  key text primary key,
+  value text not null
+);
+alter table public.app_secrets enable row level security;
+revoke all on public.app_secrets from anon, authenticated;

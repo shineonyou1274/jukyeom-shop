@@ -237,6 +237,9 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .s-delivered { background: #ebe8e1; color: var(--ink-2); }
 .s-cancelled, .s-failed { background: #f5e1dc; color: var(--red); }
 .ship-box { background: var(--paper); border-radius: 10px; padding: 12px; margin: 10px 0; }
+.order-alerts { display: flex; justify-content: space-between; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-2, transparent); margin-top: 12px; }
+.order-alerts p { margin: 4px 0 0; }
+.order-alerts .on { color: var(--green); }
 .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .inline-form { display: inline-flex; gap: 6px; }
 .inline-form input { width: 160px; padding: 7px 10px; font-size: .9rem; }

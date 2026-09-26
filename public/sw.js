@@ -29,3 +29,29 @@ self.addEventListener('fetch', (e) => {
     )
   }
 })
+
+// 관리자 주문 알림 (서버 /api/_notify.js 에서 보냄)
+self.addEventListener('push', (e) => {
+  let data = {}
+  try { data = e.data ? e.data.json() : {} } catch { data = { body: e.data?.text() } }
+  e.waitUntil(self.registration.showNotification(data.title || '천왕봉 죽염', {
+    body: data.body || '새 소식이 있어요.',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag,
+    renotify: Boolean(data.tag),
+    requireInteraction: true,
+    vibrate: [200, 100, 200],
+    data: { url: data.url || '/admin' },
+  }))
+})
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const url = new URL(e.notification.data?.url || '/admin', self.location.origin).href
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+    const win = wins.find((w) => w.url.startsWith(self.location.origin))
+    if (win) return win.navigate(url).then((w) => (w || win).focus())
+    return self.clients.openWindow(url)
+  }))
+})

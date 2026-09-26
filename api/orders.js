@@ -1,5 +1,6 @@
 import { FREE_SHIPPING_THRESHOLD, HttpError, SHIPPING_FEE, digits, optionalUser, postHandler, supabaseAdmin } from './_lib.js'
 import { BANK } from '../src/config/store.js'
+import { notifyOrder } from './_notify.js'
 
 function makeOrderNo() {
   const d = new Date(Date.now() + 9 * 3600 * 1000) // KST
@@ -101,6 +102,9 @@ export default postHandler(async (req, body) => {
 
   // 결제창을 닫아 버려진 주문서(결제 대기)는 하루가 지나면 정리한다
   await db.from('orders').delete().eq('status', 'pending').lt('created_at', new Date(Date.now() - 86400000).toISOString())
+
+  // 무통장입금은 주문서가 만들어진 순간이 주문 접수다 (카드는 결제 승인 때 알린다)
+  if (bank) await notifyOrder(order.id, 'awaiting')
 
   return { orderNo: order.order_no, orderName, amount: totalAmount }
 })

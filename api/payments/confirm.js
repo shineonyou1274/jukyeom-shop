@@ -1,5 +1,6 @@
 import { HttpError, optionalUser, postHandler, supabaseAdmin, tossAuthHeader } from '../_lib.js'
 import { bankName } from '../_banks.js'
+import { notifyOrder } from '../_notify.js'
 
 // 토스 결제창에서 돌아온 뒤 호출: 금액을 검증하고 토스에 최종 승인을 요청한다
 export default postHandler(async (req, body) => {
@@ -45,6 +46,7 @@ export default postHandler(async (req, body) => {
       },
     }).eq('id', order.id).eq('status', 'pending')
     if (error) throw error
+    await notifyOrder(order.id, 'awaiting')
   } else if (payment.status === 'DONE') {
     const { error } = await db.rpc('mark_order_paid', {
       p_order_id: order.id,
@@ -53,6 +55,7 @@ export default postHandler(async (req, body) => {
       p_receipt_url: payment.receipt?.url ?? null,
     })
     if (error) throw error
+    await notifyOrder(order.id, 'paid')
   } else {
     throw new HttpError(400, `결제가 완료되지 않았어요. (${payment.status})`)
   }
