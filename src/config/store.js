@@ -17,7 +17,7 @@ export const STORE = {
 
 // 무통장입금 계좌: enabled를 true로 바꾸면 결제 화면에 무통장입금이 나타나요.
 export const BANK = {
-  enabled: false,  // 토스 가상계좌와 무통장입금 중 결정되면 켜기
+  enabled: true,
   bank: '농협은행',
   account: '835013-52-061658',
   holder: '박상엽',
