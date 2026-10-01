@@ -241,7 +241,8 @@ label.check input { width: 18px; height: 18px; accent-color: var(--green); }
 .order-alerts p { margin: 4px 0 0; }
 .order-alerts .on { color: var(--green); }
 .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.inline-form { display: inline-flex; gap: 6px; }
+.inline-form { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.inline-form select { padding: 7px 8px; font-size: .9rem; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
 .inline-form input { width: 160px; padding: 7px 10px; font-size: .9rem; }
 .admin-products { list-style: none; padding: 0; margin-top: 16px; }
 .admin-products li { display: flex; align-items: center; gap: 14px; padding: 12px; margin-bottom: 10px; }

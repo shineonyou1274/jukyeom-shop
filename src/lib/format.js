@@ -31,3 +31,14 @@ export function depositDue(order, dueDays) {
   const d = order.deposit_info?.dueDate ? new Date(order.deposit_info.dueDate) : new Date(new Date(order.created_at).getTime() + dueDays * 86400000)
   return d.toLocaleString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })
 }
+
+// 택배사: 송장은 "택배사 송장번호" 한 줄로 저장한다 (예: "우체국택배 6896012345678")
+export const COURIERS = ['우체국택배', 'CJ대한통운', '한진택배', '롯데택배', '로젠택배', '경동택배', '대신택배']
+export function parseTracking(value) {
+  const s = String(value || '').trim()
+  const courier = COURIERS.find((c) => s.startsWith(c + ' '))
+  return courier ? { courier, number: s.slice(courier.length + 1).trim() } : { courier: '', number: s }
+}
+// 네이버 검색의 택배 조회 결과로 연결 (택배사마다 조회 주소가 자주 바뀌어서)
+export const trackingUrl = ({ courier, number }) =>
+  `https://search.naver.com/search.naver?query=${encodeURIComponent(`${courier || '택배'} ${number}`)}`

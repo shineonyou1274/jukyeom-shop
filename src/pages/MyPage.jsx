@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
+import { ORDER_STATUS, dateTime, parseTracking, phoneFormat, trackingUrl, won } from '../lib/format'
 import { STORE } from '../config/store'
 import DepositInfo from '../components/DepositInfo'
 
@@ -74,7 +74,7 @@ export function OrderCard({ order }) {
       {order.status === 'awaiting_deposit' && <DepositInfo order={order} />}
       <p className="small muted">
         {order.receiver_name} · {order.address1} {order.address2}
-        {order.tracking_no && <> · 송장번호 <b>{order.tracking_no}</b></>}
+        {order.tracking_no && <TrackingLine value={order.tracking_no} />}
       </p>
       <div className="order-foot small">
         {order.receipt_url && <a href={order.receipt_url} target="_blank" rel="noreferrer">영수증 보기</a>}
@@ -104,5 +104,15 @@ function ProfileForm({ profile, userId, onSaved }) {
       <button className="btn btn-primary">저장</button>
       <Link to="/reset-password" className="more">비밀번호 변경</Link>
     </form>
+  )
+}
+
+function TrackingLine({ value }) {
+  const t = parseTracking(value)
+  return (
+    <>
+      <br />{t.courier || '송장번호'} <b>{t.number}</b>{' '}
+      <a href={trackingUrl(t)} target="_blank" rel="noreferrer">배송 조회</a>
+    </>
   )
 }

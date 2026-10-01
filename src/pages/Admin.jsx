@@ -2,7 +2,7 @@ import { usePageMeta } from '../lib/usePageMeta'
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { callApi } from '../lib/api'
-import { ORDER_STATUS, dateTime, phoneFormat, won } from '../lib/format'
+import { COURIERS, ORDER_STATUS, dateTime, parseTracking, phoneFormat, won } from '../lib/format'
 import ProductImage from '../components/ProductImage'
 import { Stars } from '../components/Reviews'
 import OrderAlerts from '../components/OrderAlerts'
@@ -71,7 +71,16 @@ function AdminOrders() {
 }
 
 function AdminOrderCard({ order, onChange }) {
-  const [tracking, setTracking] = useState(order.tracking_no || '')
+  const saved = parseTracking(order.tracking_no)
+  const [tracking, setTracking] = useState(saved.number)
+  const [courier, setCourier] = useState(() => {
+    if (saved.courier) return saved.courier
+    try { return localStorage.getItem('courier') || COURIERS[0] } catch { return COURIERS[0] }
+  })
+  function ship() {
+    try { localStorage.setItem('courier', courier) } catch { /* 저장 안 돼도 괜찮음 */ }
+    update({ status: 'shipped', tracking_no: `${courier} ${tracking.replace(/\s/g, '')}` })
+  }
   const [busy, setBusy] = useState(false)
 
   async function update(fields) {
@@ -144,9 +153,11 @@ function AdminOrderCard({ order, onChange }) {
         )}
         {['paid', 'preparing', 'shipped'].includes(order.status) && (
           <span className="inline-form">
-            <input placeholder="송장번호" value={tracking} onChange={(e) => setTracking(e.target.value)} />
-            <button className="btn btn-primary sm" disabled={busy || !tracking.trim()}
-              onClick={() => update({ status: 'shipped', tracking_no: tracking.trim() })}>
+            <select value={courier} onChange={(e) => setCourier(e.target.value)} aria-label="택배사">
+              {COURIERS.map((c) => <option key={c}>{c}</option>)}
+            </select>
+            <input placeholder="송장번호" inputMode="numeric" value={tracking} onChange={(e) => setTracking(e.target.value)} />
+            <button className="btn btn-primary sm" disabled={busy || !tracking.trim()} onClick={ship}>
               {order.status === 'shipped' ? '송장 수정' : '발송 처리'}
             </button>
           </span>
