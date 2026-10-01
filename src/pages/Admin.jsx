@@ -26,51 +26,123 @@ export default function Admin() {
 }
 
 // ───────────────────────── 주문 관리 ─────────────────────────
-const FILTERS = [
-  ['todo', '처리할 주문', ['paid', 'preparing']],
+const TABS = [
+  ['new', '새 주문', ['paid']],
+  ['preparing', '준비중', ['preparing']],
   ['deposit', '입금 대기', ['awaiting_deposit']],
   ['shipped', '배송중', ['shipped']],
   ['delivered', '배송 완료', ['delivered']],
   ['cancelled', '취소', ['cancelled']],
-  ['all', '전체', ['awaiting_deposit', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled']],
+  ['all', '전체', null],
 ]
+const PERIODS = [['all', '전체 기간'], ['today', '오늘'], ['7', '최근 7일'], ['30', '최근 30일'], ['month', '이번 달']]
+
+function inPeriod(o, period) {
+  if (period === 'all') return true
+  const t = new Date(o.created_at)
+  const now = new Date()
+  if (period === 'today') return t.toDateString() === now.toDateString()
+  if (period === 'month') return t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth()
+  return now - t <= Number(period) * 86400000
+}
+
+const searchText = (o) => [
+  o.order_no, o.receiver_name, o.orderer_name, o.depositor_name, o.receiver_phone, o.orderer_phone,
+  o.address1, o.tracking_no, ...o.order_items.map((i) => i.product_name),
+].join(' ').replace(/-/g, '').toLowerCase()
+
+// 택배 접수용 엑셀(CSV) 파일
+function downloadCsv(list) {
+  const rows = [['주문번호', '주문일', '상태', '받는분', '연락처', '우편번호', '주소', '상세주소', '상품', '수량', '결제금액', '배송메모', '송장']]
+  for (const o of list) {
+    rows.push([
+      o.order_no, dateTime(o.created_at), ORDER_STATUS[o.status], o.receiver_name, o.receiver_phone, o.zipcode,
+      o.address1, o.address2, o.order_items.map((i) => `${i.product_name} x${i.quantity}`).join(' / '),
+      o.order_items.reduce((s, i) => s + i.quantity, 0), o.total_amount, o.memo, o.tracking_no,
+    ])
+  }
+  const csv = rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n')
+  const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }))
+  const a = Object.assign(document.createElement('a'), { href: url, download: `천왕봉죽염_주문_${new Date().toISOString().slice(0, 10)}.csv` })
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 function AdminOrders() {
-  const [filter, setFilter] = useState('todo')
+  const [tab, setTab] = useState('new')
+  const [period, setPeriod] = useState('all')
+  const [query, setQuery] = useState('')
   const [orders, setOrders] = useState(null)
+  const [openId, setOpenId] = useState(null)
 
+  // 결제 대기·실패를 뺀 주문을 한 번에 불러와서 탭·기간·검색은 화면에서 거른다
   const load = useCallback(async () => {
-    const statuses = FILTERS.find((f) => f[0] === filter)[2]
     const { data } = await supabase
-      .from('orders').select('*, order_items(*)').in('status', statuses)
-      .order('created_at', { ascending: false }).limit(200)
+      .from('orders').select('*, order_items(*)')
+      .not('status', 'in', '(pending,failed)')
+      .order('created_at', { ascending: false }).limit(1000)
     setOrders(data || [])
-  }, [filter])
+  }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    window.addEventListener('focus', load)
+    return () => window.removeEventListener('focus', load)
+  }, [load])
 
-  const todaySales = (orders || [])
-    .filter((o) => o.status !== 'cancelled' && new Date(o.paid_at).toDateString() === new Date().toDateString())
-    .reduce((s, o) => s + o.total_amount, 0)
+  const all = orders || []
+  const q = query.trim().replace(/-/g, '').toLowerCase()
+  const scoped = all.filter((o) => inPeriod(o, period) && (!q || searchText(o).includes(q)))
+  const statuses = TABS.find((t) => t[0] === tab)[2]
+  const list = statuses ? scoped.filter((o) => statuses.includes(o.status)) : scoped
+  const count = (st) => (st ? scoped.filter((o) => st.includes(o.status)).length : scoped.length)
+
+  const isPaid = (o) => ['paid', 'preparing', 'shipped', 'delivered'].includes(o.status)
+  const sum = (arr) => arr.reduce((s, o) => s + o.total_amount, 0)
+  const today = all.filter((o) => isPaid(o) && inPeriod(o, 'today'))
+  const month = all.filter((o) => isPaid(o) && inPeriod(o, 'month'))
 
   return (
     <>
+      <div className="stat-row">
+        <div><span>오늘 주문</span><b>{today.length}건</b><small>{won(sum(today))}</small></div>
+        <div><span>이번 달 매출</span><b>{won(sum(month))}</b><small>{month.length}건</small></div>
+        <div className={count(['paid']) ? 'alert' : ''}><span>발송할 주문</span><b>{all.filter((o) => ['paid', 'preparing'].includes(o.status)).length}건</b><small>새 주문 + 준비중</small></div>
+        <div><span>입금 대기</span><b>{all.filter((o) => o.status === 'awaiting_deposit').length}건</b><small>무통장·가상계좌</small></div>
+      </div>
+
+      <div className="order-tools">
+        <input type="search" placeholder="이름, 전화번호, 주문번호, 상품명 검색" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="주문 검색" />
+        <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="기간">
+          {PERIODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <button className="btn btn-ghost sm" onClick={load}>새로고침</button>
+        <button className="btn btn-ghost sm" disabled={!list.length} onClick={() => downloadCsv(list)}>엑셀 내려받기</button>
+      </div>
+
       <div className="chips">
-        {FILTERS.map(([key, label]) => (
-          <button key={key} className={filter === key ? 'on' : ''} onClick={() => setFilter(key)}>{label}</button>
+        {TABS.map(([key, label, st]) => (
+          <button key={key} className={tab === key ? 'on' : ''} onClick={() => setTab(key)}>
+            {label} <span className="chip-count">{count(st)}</span>
+          </button>
         ))}
       </div>
-      {filter === 'all' && orders && <p className="muted small">오늘 결제 금액: <b>{won(todaySales)}</b></p>}
-      {!orders ? <p className="muted">불러오는 중…</p> : orders.length === 0 ? (
+
+      {!orders ? <p className="muted">불러오는 중…</p> : list.length === 0 ? (
         <p className="muted">해당하는 주문이 없어요.</p>
       ) : (
-        <ul className="order-list">{orders.map((o) => <AdminOrderCard key={o.id} order={o} onChange={load} />)}</ul>
+        <ul className="order-list">
+          {list.map((o) => (
+            <AdminOrderCard key={o.id} order={o} onChange={load}
+              open={openId === o.id} onToggle={() => setOpenId(openId === o.id ? null : o.id)} />
+          ))}
+        </ul>
       )}
     </>
   )
 }
 
-function AdminOrderCard({ order, onChange }) {
+function AdminOrderCard({ order, onChange, open, onToggle }) {
   const saved = parseTracking(order.tracking_no)
   const [tracking, setTracking] = useState(saved.number)
   const [courier, setCourier] = useState(() => {
@@ -120,14 +192,20 @@ function AdminOrderCard({ order, onChange }) {
   }
 
   return (
-    <li className="panel order">
-      <div className="order-head">
-        <div>
-          <span className={`status s-${order.status}`}>{ORDER_STATUS[order.status]}</span>
-          <span className="muted small"> {dateTime(order.paid_at || order.created_at)} · {order.order_no}</span>
-        </div>
-        <b>{won(order.total_amount)}</b>
-      </div>
+    <li className={`panel order admin-order${open ? ' open' : ''}`}>
+      <button type="button" className="order-row" onClick={onToggle} aria-expanded={open}>
+        <span className={`status s-${order.status}`}>{ORDER_STATUS[order.status]}</span>
+        <span className="order-row-main">
+          <b>{order.orderer_name || order.receiver_name}</b>
+          <span className="muted">{order.order_items.length > 1 ? `${order.order_items[0].product_name} 외 ${order.order_items.length - 1}건` : order.order_items[0]?.product_name}</span>
+        </span>
+        <span className="order-row-side">
+          <b>{won(order.total_amount)}</b>
+          <small className="muted">{dateTime(order.created_at)}</small>
+        </span>
+      </button>
+      {open && (<>
+      <p className="muted small">{order.order_no}{order.paid_at && ` · 결제 ${dateTime(order.paid_at)}`}</p>
       <ul className="mini-list">
         {order.order_items.map((it) => (
           <li key={it.id}><span>{it.product_name} × {it.quantity}</span><span>{won(it.unit_price * it.quantity)}</span></li>
@@ -169,6 +247,7 @@ function AdminOrderCard({ order, onChange }) {
           <button className="btn btn-danger sm" disabled={busy} onClick={cancel}>{order.status === 'awaiting_deposit' ? '주문 취소' : '주문 취소·환불'}</button>
         )}
       </div>
+      </>)}
     </li>
   )
 }
