@@ -47,5 +47,11 @@
       "source": "/((?!api/|assets/|favicon).*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "17 18 * * *"
+    }
   ]
 }
