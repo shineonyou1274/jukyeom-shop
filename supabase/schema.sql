@@ -364,3 +364,16 @@ create table if not exists public.app_secrets (
 );
 alter table public.app_secrets enable row level security;
 revoke all on public.app_secrets from anon, authenticated;
+
+-- ─────────────────────────────────────────────────────────────
+-- 데이터 API 권한 (2026-10-30부터 Supabase가 새 테이블에 권한을 자동으로 주지 않음)
+-- 지금 운영 중인 DB에는 이미 권한이 있어 영향 없음. 이 파일로 새 프로젝트를 만들 때를 위한 것.
+-- 실제 접근 범위는 각 테이블의 RLS 정책이 정한다. update를 열 단위로 제한한
+-- profiles·reviews는 위쪽의 column grant를 그대로 쓴다.
+-- 앞으로 public에 테이블을 새로 만들면 여기에 grant를 꼭 같이 추가할 것.
+grant select on public.products, public.product_options, public.reviews to anon;
+grant select, insert, update, delete on public.products, public.product_options, public.orders, public.order_items to authenticated;
+grant select, insert, delete on public.reviews to authenticated;
+grant select, insert on public.profiles to authenticated;
+grant all on public.profiles, public.admin_emails, public.products, public.product_options, public.orders,
+  public.order_items, public.reviews, public.push_subscriptions, public.app_secrets to service_role;
